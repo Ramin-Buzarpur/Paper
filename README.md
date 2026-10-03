@@ -33,3 +33,4 @@ Direct changes to the `main` branch should be avoided.
 
 Deep Learning AI Team  
 FINERGYAI
+SSH: git@github.com:FINERGYAI/Deep_Learning_AI.git
