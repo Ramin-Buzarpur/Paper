@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# --- ML artifacts / heavy generated data (never commit, always reproducible) ---
+*.pth
+*.pt
+*.npz
+*.npz.bak
+*.pkl
+*.h5
+*.onnx
+data/
+data_cache/
+outputs/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Secrets ---
+.env
+*.key
