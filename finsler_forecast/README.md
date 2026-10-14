@@ -22,16 +22,49 @@ training.
 Research/educational tool — not back-tested, no uncertainty estimate, not a trading signal
 on its own.
 
+## Diffusion scenarios (alternative method, EUR/USD only so far)
+
+The analog-flow method above reuses real historical continuations. `diffusion/` is a second,
+independent way to generate scenarios: a small conditional DDPM trained on hourly log-returns,
+sampled to produce synthetic (not historical) continuations. The UI can run either method, or
+both side by side, for the same forecast window — that's the point of having two methods: see
+where they agree and where they don't.
+
+Diffusion scenarios are only available for a ticker once its checkpoint has been trained:
+
+```bash
+python -m finsler_forecast.diffusion.dataset    # downloads EUR/USD minute history from Dukascopy
+python -m finsler_forecast.diffusion.train      # trains the DDPM, saves a checkpoint
+```
+
+To add another ticker, point `dataset.py`'s `SYMBOL`/`POINT_VALUE` at it, train a checkpoint,
+and add `"<ticker>": "<checkpoint path>"` to `DIFFUSION_CHECKPOINTS` in `diffusion/forecast.py`
+— the UI and backtest pick it up automatically.
+
+`backtest.py` runs a walk-forward comparison (MAE, RMSE, directional accuracy vs naive
+persistence) across the Fréchet/Karcher/median analog centers and, when available, the
+diffusion mean/median:
+
+```bash
+python finsler_forecast/backtest.py "EUR/USD"
+```
+
 ## Layout
 
 ```
-config.py      asset universe + trading calendar per category
-data.py        yfinance price download
-formatting.py  price display helpers
-geometry.py    delay embedding, local Finsler metric, analog-flow engine
-plotting.py    Plotly dashboard figure
-ui.py          Streamlit page
-app.py         entry point
+config.py          asset universe + trading calendar per category
+data.py             yfinance price download
+formatting.py        price display helpers
+geometry.py           delay embedding, local Finsler metric, analog-flow engine
+plotting.py            Plotly dashboard figure (analog and/or diffusion)
+ui.py                   Streamlit page
+app.py                   entry point
+backtest.py              walk-forward comparison across all methods
+diffusion/
+  dataset.py             Dukascopy minute downloader, hourly resampling
+  model.py                 FiLM-conditioned 1D-CNN denoiser
+  train.py                   DDPM training + sampling
+  forecast.py                 DiffusionScenarioForecaster: checkpoint -> price forecast
 ```
 
 ## Run
