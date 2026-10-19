@@ -89,15 +89,43 @@ def test_remove_flat_candles_drops_every_flat_row_regardless_of_run_length():
     assert cleaned["Close"].tolist() == [1.1, 1.1010]
 
 
-def test_resample_to_hourly_drops_a_fully_closed_hour():
-    from finsler_forecast.diffusion.dataset import resample_to_hourly
-
+def _three_hour_bars_with_a_fully_closed_middle_hour() -> pd.DataFrame:
     bars = [_bar(m, 1.1000 + m * 1e-5, volume=10) for m in range(0, 5)]  # real trading in hour 0
     bars += [_bar(60 + m, 1.1050, volume=0) for m in range(0, 60)]  # hour 1 entirely closed
     bars += [_bar(120 + m, 1.1100 + m * 1e-5, volume=10) for m in range(0, 5)]  # real trading in hour 2
-    df = _frame(bars)
+    return _frame(bars)
 
-    hourly = resample_to_hourly(df)
+
+def test_resample_to_hourly_on_raw_data_keeps_the_fake_closed_hour():
+    """Documents the raw variant's known limitation: a closed-market hour still resamples into a bar."""
+    from finsler_forecast.diffusion.dataset import resample_to_hourly
+
+    hourly = resample_to_hourly(_three_hour_bars_with_a_fully_closed_middle_hour())
+
+    assert len(hourly) == 3
+    assert pd.Timestamp("2024-01-01 01:00:00") in hourly.index
+
+
+def test_resample_to_hourly_on_denoised_data_drops_the_closed_hour():
+    from finsler_forecast.diffusion.dataset import resample_to_hourly
+
+    df = _three_hour_bars_with_a_fully_closed_middle_hour()
+    hourly = resample_to_hourly(remove_flat_candles(df))
 
     assert len(hourly) == 2  # the fully-closed hour must not appear
     assert pd.Timestamp("2024-01-01 01:00:00") not in hourly.index
+
+
+def test_build_denoised_dataset_writes_a_file_with_flat_rows_removed(tmp_path):
+    from finsler_forecast.diffusion.dataset import build_denoised_dataset
+
+    raw_path = tmp_path / "raw.parquet"
+    out_path = tmp_path / "denoised.parquet"
+    df = _three_hour_bars_with_a_fully_closed_middle_hour()
+    df.to_parquet(raw_path, index=False)
+
+    build_denoised_dataset(raw_parquet=str(raw_path), out_path=str(out_path))
+
+    result = pd.read_parquet(out_path)
+    assert len(result) == len(df) - 60
+    assert (result["Volume"] > 0).all()

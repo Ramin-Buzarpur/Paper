@@ -6,6 +6,7 @@ ticker (see diffusion/train.py), its mean/median forecast is scored too.
 
 Usage:
     python finsler_forecast/backtest.py "EUR/USD"
+    python finsler_forecast/backtest.py "EUR/USD" raw   # compare against the un-denoised dataset
 """
 
 from __future__ import annotations
@@ -20,8 +21,8 @@ import pandas as pd
 
 from config import MARKET_CATEGORIES
 from data import download_close_prices
-from diffusion.dataset import hourly_log_return_series
-from diffusion.forecast import DiffusionScenarioForecaster, diffusion_available
+from diffusion.dataset import DATASET_VARIANTS, hourly_log_return_series
+from diffusion.forecast import DIFFUSION_CHECKPOINTS, DiffusionScenarioForecaster, diffusion_available
 from geometry import FinslerRandersGeodesicEngine
 
 
@@ -112,15 +113,18 @@ if __name__ == "__main__":
     import sys
 
     asset_name = sys.argv[1] if len(sys.argv) > 1 else "EUR/USD"
+    variant = sys.argv[2] if len(sys.argv) > 2 else "denoised"
+    if variant not in DATASET_VARIANTS:
+        raise SystemExit(f"unknown dataset variant {variant!r}; choices: {sorted(DATASET_VARIANTS)}")
     ticker = MARKET_CATEGORIES["Forex Majors"].get(asset_name, "EURUSD=X")
 
     diffusion_forecaster, hourly_returns = None, None
-    if diffusion_available(ticker):
-        diffusion_forecaster = DiffusionScenarioForecaster()
-        hourly_returns = hourly_log_return_series()
-        print("diffusion checkpoint found, including it in the comparison")
+    if diffusion_available(ticker, variant):
+        diffusion_forecaster = DiffusionScenarioForecaster(DIFFUSION_CHECKPOINTS[ticker][variant])
+        hourly_returns = hourly_log_return_series(DATASET_VARIANTS[variant])
+        print(f"diffusion checkpoint found ({variant}), including it in the comparison")
     else:
-        print("no diffusion checkpoint for this ticker, comparing analog methods only")
+        print(f"no diffusion checkpoint for this ticker/variant ({variant}), comparing analog methods only")
 
     print(f"running walk-forward backtest for {asset_name} ({ticker})...")
     df = run_backtest(ticker=ticker, asset_name=asset_name, diffusion=diffusion_forecaster, hourly_returns=hourly_returns)

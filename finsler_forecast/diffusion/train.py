@@ -12,8 +12,13 @@ Design:
   - context_len, horizon_len and the normalization stats are saved inside the
     checkpoint so callers never need to duplicate this logic
 
+Trains on the denoised dataset by default (see diffusion/denoise.py) — pass
+dataset_variant="raw" to train on the unfiltered data instead, e.g. to compare
+the two in the UI.
+
 Usage:
     python -m finsler_forecast.diffusion.train
+    python -m finsler_forecast.diffusion.train --variant raw
 """
 
 from __future__ import annotations
@@ -25,10 +30,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from .dataset import DATA_DIR, load_hourly_log_returns
+from .dataset import DATA_DIR, DATASET_VARIANTS, load_hourly_log_returns
 from .model import DenoiseNet
 
-CHECKPOINT_PATH = os.path.join(DATA_DIR, "diffusion_eurusd.pt")
+
+def checkpoint_path(variant: str = "denoised") -> str:
+    if variant not in DATASET_VARIANTS:
+        raise ValueError(f"unknown dataset variant {variant!r}; choices: {sorted(DATASET_VARIANTS)}")
+    return os.path.join(DATA_DIR, f"diffusion_eurusd_{variant}.pt")
 
 
 def get_device() -> torch.device:
@@ -86,19 +95,22 @@ class GaussianDiffusion:
 
 
 def train(
+    dataset_variant: str = "denoised",
     context_len: int = 168,
     horizon_multiplier: int = 3,
     n_timesteps: int = 200,
     epochs: int = 30,
     batch_size: int = 128,
     lr: float = 2e-4,
-    checkpoint_path: str = CHECKPOINT_PATH,
+    out_path: str | None = None,
     log_ret: np.ndarray | None = None,
     bars_per_day: float | None = None,
 ) -> None:
     device = get_device()
     if log_ret is None:
-        log_ret, bars_per_day = load_hourly_log_returns()
+        log_ret, bars_per_day = load_hourly_log_returns(DATASET_VARIANTS[dataset_variant])
+    if out_path is None:
+        out_path = checkpoint_path(dataset_variant)
     horizon_len = int(round(bars_per_day * horizon_multiplier))
     print(f"bars/day ~= {bars_per_day:.1f} -> horizon_len = {horizon_len}, context_len = {context_len}")
 
@@ -132,14 +144,14 @@ def train(
         print(f"epoch {epoch:3d}/{epochs}  loss={total_loss / n_batches:.5f}")
 
     config = DiffusionConfig(context_len, horizon_len, bars_per_day, n_timesteps, mean, std)
-    os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
-    torch.save({"model_state": model.state_dict(), "config": asdict(config)}, checkpoint_path)
-    print(f"saved checkpoint: {checkpoint_path}")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    torch.save({"model_state": model.state_dict(), "config": asdict(config)}, out_path)
+    print(f"saved checkpoint: {out_path}")
 
 
-def load_model_and_config(checkpoint_path: str = CHECKPOINT_PATH) -> tuple[DenoiseNet, DiffusionConfig]:
+def load_model_and_config(path: str | None = None) -> tuple[DenoiseNet, DiffusionConfig]:
     device = get_device()
-    ckpt = torch.load(checkpoint_path, map_location=device)
+    ckpt = torch.load(path or checkpoint_path(), map_location=device)
     config = DiffusionConfig(**ckpt["config"])
     model = DenoiseNet(horizon_len=config.horizon_len).to(device)
     model.load_state_dict(ckpt["model_state"])
@@ -148,4 +160,9 @@ def load_model_and_config(checkpoint_path: str = CHECKPOINT_PATH) -> tuple[Denoi
 
 
 if __name__ == "__main__":
-    train()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--variant", default="denoised", choices=sorted(DATASET_VARIANTS))
+    args = parser.parse_args()
+    train(dataset_variant=args.variant)

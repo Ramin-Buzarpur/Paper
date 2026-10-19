@@ -49,6 +49,10 @@ POINT_VALUE = 100_000  # 1000 for JPY pairs
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_cache")
 RAW_DAY_CACHE = os.path.join(DATA_DIR, "dukascopy_days")
 MERGED_PARQUET = os.path.join(DATA_DIR, f"{SYMBOL}_minute.parquet")
+DENOISED_PARQUET = os.path.join(DATA_DIR, f"{SYMBOL}_minute_denoised.parquet")
+
+# the two minute-data variants everything downstream (training, backtest, UI) can pick between
+DATASET_VARIANTS = {"raw": MERGED_PARQUET, "denoised": DENOISED_PARQUET}
 
 URL_TEMPLATE = "https://datafeed.dukascopy.com/datafeed/{symbol}/{year}/{month:02d}/{day:02d}/{side}_candles_min_1.bi5"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -186,15 +190,20 @@ def build_dataset(probe_start: date = date(2000, 1, 3), probe_only: bool = False
     df = merge_cached_days(first_day, last_day)
     df.to_parquet(MERGED_PARQUET, index=False)
     print(f"saved {len(df)} minute bars to {MERGED_PARQUET}")
+    build_denoised_dataset(raw_parquet=MERGED_PARQUET)
     return first_day
 
 
+def build_denoised_dataset(raw_parquet: str = MERGED_PARQUET, out_path: str = DENOISED_PARQUET) -> None:
+    """Writes a copy of the minute data with closed-market flat candles removed, next to the raw file."""
+    df = pd.read_parquet(raw_parquet)
+    clean_df = remove_flat_candles(df)
+    clean_df.to_parquet(out_path, index=False)
+    print(f"saved {len(clean_df)} denoised minute bars to {out_path} ({len(df) - len(clean_df)} flat bars dropped)")
+
+
 def resample_to_hourly(minute_df: pd.DataFrame) -> pd.DataFrame:
-    # drop closed-market candles first, so an hour that's entirely a market closure
-    # (e.g. the weekend) has no rows left and resamples to NaN instead of a fake
-    # zero-volatility bar at the last pre-closure price
-    clean_df = remove_flat_candles(minute_df)
-    hourly = clean_df.set_index("Datetime")["Close"].resample("1h").last().dropna()
+    hourly = minute_df.set_index("Datetime")["Close"].resample("1h").last().dropna()
     return hourly.to_frame("Close")
 
 

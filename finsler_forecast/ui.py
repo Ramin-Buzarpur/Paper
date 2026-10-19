@@ -6,8 +6,13 @@ import streamlit as st
 
 from config import CATEGORY_CALENDAR, MARKET_CATEGORIES
 from data import download_close_prices
-from diffusion.dataset import hourly_log_return_series
-from diffusion.forecast import DiffusionForecast, DiffusionScenarioForecaster, diffusion_available
+from diffusion.dataset import DATASET_VARIANTS, hourly_log_return_series
+from diffusion.forecast import (
+    DIFFUSION_CHECKPOINTS,
+    DiffusionForecast,
+    DiffusionScenarioForecaster,
+    available_variants,
+)
 from formatting import fmt_price
 from geometry import FinslerRandersGeodesicEngine
 from plotting import BIAS_LABELS, build_forecast_figure
@@ -16,6 +21,7 @@ FORECAST_HORIZON_DAYS = 3
 ANALOG_METHOD = "Analog flow (Finsler)"
 DIFFUSION_METHOD = "Diffusion scenarios"
 COMPARE_METHOD = "Compare both"
+VARIANT_LABELS = {"denoised": "Denoised (recommended)", "raw": "Raw (includes market-closure noise)"}
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -24,10 +30,8 @@ def cached_close_prices(ticker: str, years: int) -> pd.DataFrame:
 
 
 @st.cache_resource(show_spinner=False)
-def cached_diffusion_forecaster(ticker: str) -> DiffusionScenarioForecaster:
-    from diffusion.forecast import DIFFUSION_CHECKPOINTS
-
-    return DiffusionScenarioForecaster(DIFFUSION_CHECKPOINTS[ticker])
+def cached_diffusion_forecaster(ticker: str, variant: str) -> DiffusionScenarioForecaster:
+    return DiffusionScenarioForecaster(DIFFUSION_CHECKPOINTS[ticker][variant])
 
 
 def show_dataframe(df: pd.DataFrame) -> None:
@@ -48,6 +52,7 @@ def render_results(
     engine: FinslerRandersGeodesicEngine,
     method: str,
     diffusion: DiffusionForecast | None,
+    dataset_variant: str | None = None,
 ) -> None:
     show_analog = method in (ANALOG_METHOD, COMPARE_METHOD)
     curr = float(engine.prices[-1])
@@ -71,6 +76,7 @@ def render_results(
     if diffusion is not None:
         dm, dd = float(diffusion.mean_price_path[-1]), float(diffusion.median_price_path[-1])
         summary |= {
+            "Dataset": VARIANT_LABELS.get(dataset_variant, dataset_variant),
             "T+3 diffusion mean": f"{fmt_price(dm)} ({pct(dm):+.2f}%)",
             "T+3 diffusion median": f"{fmt_price(dd)} ({pct(dd):+.2f}%)",
         }
@@ -133,11 +139,12 @@ def main() -> None:
     asset_name = st.sidebar.selectbox("Asset", list(assets.keys()))
     ticker = assets[asset_name]
 
+    variants = available_variants(ticker)
     method_options = [ANALOG_METHOD]
-    if diffusion_available(ticker):
+    if variants:
         method_options += [DIFFUSION_METHOD, COMPARE_METHOD]
     method = st.sidebar.selectbox("Forecast method", method_options)
-    if len(method_options) == 1:
+    if not variants:
         st.sidebar.caption("diffusion scenarios need a trained checkpoint; none yet for this asset")
 
     years = st.sidebar.slider("History (years)", 1, 20, 5)
@@ -146,8 +153,13 @@ def main() -> None:
     tau = st.sidebar.slider("Delay τ (0 = auto)", 0, 10, 1)
     drop_last = st.sidebar.checkbox("Drop today's unfinished bar", value=True)
     n_diffusion_scenarios = 200
+    dataset_variant = None
     if method in (DIFFUSION_METHOD, COMPARE_METHOD):
         n_diffusion_scenarios = st.sidebar.slider("Diffusion scenarios (N)", 20, 500, 200, 20)
+        ordered = [v for v in ("denoised", "raw") if v in variants]
+        dataset_variant = st.sidebar.selectbox(
+            "Dataset", ordered, format_func=lambda v: VARIANT_LABELS.get(v, v)
+        )
 
     if st.sidebar.button("Run", type="primary"):
         with st.spinner(f"computing {method.lower()} for {asset_name}..."):
@@ -169,8 +181,8 @@ def main() -> None:
 
                 diffusion_forecast = None
                 if method in (DIFFUSION_METHOD, COMPARE_METHOD):
-                    forecaster = cached_diffusion_forecaster(ticker)
-                    hourly_returns = hourly_log_return_series().to_numpy(dtype=np.float64)
+                    forecaster = cached_diffusion_forecaster(ticker, dataset_variant)
+                    hourly_returns = hourly_log_return_series(DATASET_VARIANTS[dataset_variant]).to_numpy(dtype=np.float64)
                     diffusion_forecast = forecaster.forecast(
                         hourly_returns,
                         current_price=float(engine.prices[-1]),
@@ -182,6 +194,7 @@ def main() -> None:
                 st.session_state["engine"] = engine
                 st.session_state["method"] = method
                 st.session_state["diffusion_forecast"] = diffusion_forecast
+                st.session_state["dataset_variant"] = dataset_variant
                 st.session_state["error"] = None
             except Exception as exc:
                 st.session_state["engine"] = None
@@ -194,4 +207,9 @@ def main() -> None:
     elif engine is None:
         st.info("choose an asset and click Run.")
     else:
-        render_results(engine, st.session_state["method"], st.session_state["diffusion_forecast"])
+        render_results(
+            engine,
+            st.session_state["method"],
+            st.session_state["diffusion_forecast"],
+            st.session_state.get("dataset_variant"),
+        )

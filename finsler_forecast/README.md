@@ -33,24 +33,34 @@ where they agree and where they don't.
 Diffusion scenarios are only available for a ticker once its checkpoint has been trained:
 
 ```bash
-python -m finsler_forecast.diffusion.dataset    # downloads EUR/USD minute history from Dukascopy
-python -m finsler_forecast.diffusion.train      # trains the DDPM, saves a checkpoint
+python -m finsler_forecast.diffusion.dataset    # downloads EUR/USD minute history from Dukascopy,
+                                                 # saves both a raw and a denoised parquet
+python -m finsler_forecast.diffusion.train              # trains on the denoised data (recommended)
+python -m finsler_forecast.diffusion.train --variant raw  # or trains on the raw data, for comparison
 ```
 
-`resample_to_hourly()` drops closed-market "flat" candles (zero volume, `High == Low`) before
-resampling — weekends and holidays otherwise resample into a fake zero-volatility hourly bar
-that would teach the model a "nothing happens" pattern that isn't real. See `diffusion/denoise.py`.
+### Raw vs. denoised dataset
 
-To add another ticker, point `dataset.py`'s `SYMBOL`/`POINT_VALUE` at it, train a checkpoint,
-and add `"<ticker>": "<checkpoint path>"` to `DIFFUSION_CHECKPOINTS` in `diffusion/forecast.py`
-— the UI and backtest pick it up automatically.
+Dukascopy still emits a row for closed-market periods (weekends, holidays): zero volume,
+`High == Low`. Left in, these resample into fake zero-volatility hourly bars that teach the
+model a "nothing happens" pattern that isn't real — see `diffusion/denoise.py`. `dataset.py`
+keeps both variants on disk side by side (`data_cache/EURUSD_minute.parquet` and
+`..._denoised.parquet`), each trains to its own checkpoint
+(`diffusion_eurusd_raw.pt` / `diffusion_eurusd_denoised.pt`), and the UI's "Dataset" selector
+(shown whenever a diffusion-based method is picked) switches between them — so you can see,
+on the same chart, whether denoising actually changed the forecast.
+
+To add another ticker, point `dataset.py`'s `SYMBOL`/`POINT_VALUE` at it, train both variants,
+and add `"<ticker>": {"raw": ..., "denoised": ...}` to `DIFFUSION_CHECKPOINTS` in
+`diffusion/forecast.py` — the UI and backtest pick it up automatically.
 
 `backtest.py` runs a walk-forward comparison (MAE, RMSE, directional accuracy vs naive
 persistence) across the Fréchet/Karcher/median analog centers and, when available, the
 diffusion mean/median:
 
 ```bash
-python finsler_forecast/backtest.py "EUR/USD"
+python finsler_forecast/backtest.py "EUR/USD"            # diffusion compared on the denoised dataset
+python finsler_forecast/backtest.py "EUR/USD" raw        # ...or on the raw dataset
 ```
 
 ## Layout

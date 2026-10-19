@@ -7,17 +7,22 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .train import CHECKPOINT_PATH, DenoiseNet, DiffusionConfig, GaussianDiffusion, get_device, load_model_and_config
+from .dataset import DATASET_VARIANTS
+from .train import DenoiseNet, DiffusionConfig, GaussianDiffusion, checkpoint_path, get_device, load_model_and_config
 
-# ticker -> checkpoint path; add an entry here once a checkpoint is trained for that ticker
-DIFFUSION_CHECKPOINTS: dict[str, str] = {
-    "EURUSD=X": CHECKPOINT_PATH,
+# ticker -> dataset variant -> checkpoint path; add a ticker once checkpoints are trained for it
+DIFFUSION_CHECKPOINTS: dict[str, dict[str, str]] = {
+    "EURUSD=X": {variant: checkpoint_path(variant) for variant in DATASET_VARIANTS},
 }
 
 
-def diffusion_available(ticker: str) -> bool:
-    path = DIFFUSION_CHECKPOINTS.get(ticker)
-    return path is not None and os.path.exists(path)
+def available_variants(ticker: str) -> list[str]:
+    paths = DIFFUSION_CHECKPOINTS.get(ticker, {})
+    return [variant for variant, path in paths.items() if os.path.exists(path)]
+
+
+def diffusion_available(ticker: str, variant: str = "denoised") -> bool:
+    return variant in available_variants(ticker)
 
 
 @dataclass
@@ -31,10 +36,10 @@ class DiffusionForecast:
 class DiffusionScenarioForecaster:
     """Wraps a trained diffusion checkpoint: recent hourly log-returns -> a day-by-day price forecast."""
 
-    def __init__(self, checkpoint_path: str = CHECKPOINT_PATH):
+    def __init__(self, path: str):
         self.model: DenoiseNet
         self.config: DiffusionConfig
-        self.model, self.config = load_model_and_config(checkpoint_path)
+        self.model, self.config = load_model_and_config(path)
         self.device = get_device()
         self.diffusion = GaussianDiffusion(self.config.n_timesteps, self.device)
 
