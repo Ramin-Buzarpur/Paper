@@ -40,6 +40,8 @@ import numpy as np
 import pandas as pd
 import requests
 
+from .denoise import remove_flat_candles
+
 SYMBOL = "EURUSD"
 SIDE = "BID"
 POINT_VALUE = 100_000  # 1000 for JPY pairs
@@ -188,7 +190,11 @@ def build_dataset(probe_start: date = date(2000, 1, 3), probe_only: bool = False
 
 
 def resample_to_hourly(minute_df: pd.DataFrame) -> pd.DataFrame:
-    hourly = minute_df.set_index("Datetime")["Close"].resample("1h").last().dropna()
+    # drop closed-market candles first, so an hour that's entirely a market closure
+    # (e.g. the weekend) has no rows left and resamples to NaN instead of a fake
+    # zero-volatility bar at the last pre-closure price
+    clean_df = remove_flat_candles(minute_df)
+    hourly = clean_df.set_index("Datetime")["Close"].resample("1h").last().dropna()
     return hourly.to_frame("Close")
 
 

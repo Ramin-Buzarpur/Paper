@@ -19,6 +19,9 @@ data/
 data_cache/
 outputs/
 
+# --- graphify (local token-saving knowledge graph, never shared) ---
+graphify-out/
+
 # --- Editors / OS ---
 .vscode/
 .idea/

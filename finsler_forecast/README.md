@@ -37,6 +37,10 @@ python -m finsler_forecast.diffusion.dataset    # downloads EUR/USD minute histo
 python -m finsler_forecast.diffusion.train      # trains the DDPM, saves a checkpoint
 ```
 
+`resample_to_hourly()` drops closed-market "flat" candles (zero volume, `High == Low`) before
+resampling — weekends and holidays otherwise resample into a fake zero-volatility hourly bar
+that would teach the model a "nothing happens" pattern that isn't real. See `diffusion/denoise.py`.
+
 To add another ticker, point `dataset.py`'s `SYMBOL`/`POINT_VALUE` at it, train a checkpoint,
 and add `"<ticker>": "<checkpoint path>"` to `DIFFUSION_CHECKPOINTS` in `diffusion/forecast.py`
 — the UI and backtest pick it up automatically.
@@ -62,6 +66,8 @@ app.py                   entry point
 backtest.py              walk-forward comparison across all methods
 diffusion/
   dataset.py             Dukascopy minute downloader, hourly resampling
+  denoise.py              drops closed-market "flat" candles before resampling
+                          (not to be confused with model.py's noise-prediction network)
   model.py                 FiLM-conditioned 1D-CNN denoiser
   train.py                   DDPM training + sampling
   forecast.py                 DiffusionScenarioForecaster: checkpoint -> price forecast
