@@ -63,6 +63,31 @@ python finsler_forecast/backtest.py "EUR/USD"            # diffusion compared on
 python finsler_forecast/backtest.py "EUR/USD" raw        # ...or on the raw dataset
 ```
 
+## Windowed RL backtest (EUR/USD)
+
+`rl/` adds a second layer on top of the same geometry — it does not change it. The hourly
+series is cut into non-overlapping 3-day windows; each window opens with the Finsler
+forecast made from the daily closes *before* it (the prior), and a small PPO agent learns a
+residual position on top of that prior, trading the window bar by bar with costs. The agent
+is trained on the earliest windows and then walked forward one window at a time, so every
+evaluated window is out of sample.
+
+Because the raw and denoised minute datasets share every trading-hour close and differ only
+in the closed-market hours, the comparison between them is measured on those hourly bars
+(17% of the raw hourly bars are exact-zero "nothing happened" returns).
+
+```bash
+python -m finsler_forecast.rl.dataset                     # build the windows (denoised)
+python -m finsler_forecast.rl.backtest                    # walk-forward, denoised
+python -m finsler_forecast.rl.backtest raw                # walk-forward, raw
+python -m finsler_forecast.rl.backtest --compare-variants # both, side by side
+python -m finsler_forecast.rl.backtest denoised --diffusion  # also score the diffusion prior
+```
+
+The summary table reports total return, annualized Sharpe, hit rate and max drawdown per
+method, plus buy-and-hold over the same bars. `--retrain` refits PPO before every test
+window (stricter, much slower).
+
 ## Layout
 
 ```
@@ -74,6 +99,10 @@ plotting.py            Plotly dashboard figure (analog and/or diffusion)
 ui.py                   Streamlit page
 app.py                   entry point
 backtest.py              walk-forward comparison across all methods
+rl/
+  dataset.py              hourly bars -> 3-day windows, Finsler (and diffusion) prior per window
+  agent.py                 window environment + PPO residual policy
+  backtest.py               walk-forward RL backtest, raw vs denoised comparison
 diffusion/
   dataset.py             Dukascopy minute downloader, hourly resampling
   denoise.py              drops closed-market "flat" candles before resampling
