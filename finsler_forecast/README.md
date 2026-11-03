@@ -148,6 +148,28 @@ up on daily closes is not present at hourly resolution with the same embedding �
 retuned per-timeframe (same `k_neighbors`/`tau` defaults), so it's possible a timeframe-specific
 retune would help, but as shipped, daily is the only timeframe this method should be trusted on.
 
+**Finding 5 — selective prediction (only trust karcher when its own confidence signal is
+high) also doesn't hold up, and goes backwards on the two best assets.** `benchmark.py`'s
+`confidence_gate_breakdown` splits each asset's folds into "high" vs "low" |wind_t_stat|
+(the neighbours' next-return t-stat — an expanding-median split computed causally, no
+look-ahead) and scores karcher separately on each half:
+
+| asset | high-confidence directional acc. | low-confidence directional acc. |
+|---|---|---|
+| Bitcoin | 43.3% | **63.3%** |
+| Brent | 57.6% | **63.0%** |
+| S&P 500 | **57.6%** | 48.1% |
+| Ethereum | **57.1%** | 40.6% |
+| EUR/USD | 51.4% | 52.0% |
+
+On exactly the two assets where karcher has its clearest overall edge (BTC, Brent), being more
+"confident" by the engine's own wind-strength measure makes it *worse*, not better — the
+opposite of what a useful confidence signal should do. This is consistent with findings 1 and
+3: the wind/Randers term is the part of this method that doesn't generalize, and anything
+derived from it (as a correction, a blend feature, or now a confidence gate) inherits that.
+The one component that holds up under every test here is the plain, wind-free karcher mean
+itself.
+
 ## Layout
 
 ```

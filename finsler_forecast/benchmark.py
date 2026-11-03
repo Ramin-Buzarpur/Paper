@@ -154,6 +154,36 @@ def run_nested_ensemble(df: pd.DataFrame, min_train_folds: int = 15, val_frac: f
     return pd.DataFrame(scored)
 
 
+def confidence_gate_breakdown(df: pd.DataFrame, min_train_folds: int = 15) -> pd.DataFrame:
+    """Selective-prediction test: does karcher do better on folds where the engine's own,
+    causally-available confidence signal (|wind_t_stat|) was high, vs. low? For fold i the
+    high/low split point is the median of |wind_t_stat| over folds [0, i) only (expanding,
+    never peeking ahead) -- so "high confidence" is something you could have known *before*
+    seeing the outcome, not a label chosen in hindsight."""
+    conf = df["wind_t_stat"].abs().to_numpy()
+    bucket = np.full(len(df), "warmup", dtype=object)
+    for i in range(min_train_folds, len(df)):
+        thresh = np.median(conf[:i])
+        bucket[i] = "high_confidence" if conf[i] >= thresh else "low_confidence"
+
+    out = df.copy()
+    out["confidence_bucket"] = bucket
+    rows = []
+    for b in ("high_confidence", "low_confidence"):
+        sub = out[out["confidence_bucket"] == b]
+        if sub.empty:
+            continue
+        err = sub["karcher_pred"] - sub["actual_future_price"]
+        pred_up = sub["karcher_pred"] > sub["current_price"]
+        rows.append({
+            "bucket": b,
+            "MAE": err.abs().mean(),
+            "directional_accuracy": float((pred_up == sub["actual_up"]).mean()),
+            "n_folds": len(sub),
+        })
+    return pd.DataFrame(rows)
+
+
 def score(df: pd.DataFrame) -> pd.DataFrame:
     methods = {"naive": "naive_pred", "karcher": "karcher_pred", "karcher+ai_blend": "ai_blend_pred"}
     rows = []
@@ -199,6 +229,11 @@ def run_one(ticker: str, asset_name: str, timeframe: str) -> pd.DataFrame | None
     print(f"\n=== {asset_name} ({ticker}), {timeframe}, horizon={horizon} steps, "
           f"{len(scored)} scored folds (of {len(folds)} total) ===")
     print(result.to_string(index=False))
+
+    gate = confidence_gate_breakdown(folds, min_train_folds=min_train)
+    if not gate.empty:
+        print(f"--- confidence-gate breakdown (karcher only, |wind_t_stat| vs. expanding median) ---")
+        print(gate.to_string(index=False))
     return result
 
 
