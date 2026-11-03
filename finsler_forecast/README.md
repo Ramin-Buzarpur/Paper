@@ -311,11 +311,17 @@ already captures for this asset, at least at this horizon.
 
 **Current best validated numbers, for reference:**
 
-| asset | before (Fréchet, the method's original headline output) | karcher alone | best AI-complemented |
+| asset | before (Fréchet, the method's original headline output) | karcher alone | best complement found so far |
 |---|---|---|---|
-| Brent | 35% dir. acc. | **60.0%** (CPCV-robust) | — (already robust, no AI improvement found) |
-| S&P 500 | 45% | 50.0% (CPCV median) | **67.6%** (bootstrap confidence gate, on the ~56% of days it's confident) |
-| Bitcoin | 40% | 50.0% (CPCV median, not robust) | **64.3%** (metric-learned analog selection, CPCV-robust: 0% loss rate vs. default) |
+| Brent | 35% dir. acc. | 60.0% (CPCV-robust) | **70.7%** (volume-surprise gate, finding 14) |
+| S&P 500 | 45% | 50.0% (CPCV median) | **67.6%** (bootstrap confidence gate, finding 6) / 60.0% (volume gate, more universal) |
+| Bitcoin | 40% | 50.0% (CPCV median, not robust) | 64.6% (denoising, finding 13) / 64.3% (metric learning, finding 8) / **62.5%** (volume gate, finding 14) |
+
+All of these are gate-style results (apply only to the subset of days/predictions flagged
+confident) except metric learning and denoising, which change the method for every prediction.
+The volume-surprise gate (finding 14) is the one result confirmed on every asset tested, so it's
+the strongest candidate for a general claim; the others are asset-specific but sometimes larger
+on the one asset they help.
 
 The S&P 500 number applies only to the subset of days the gate flags as confident (a
 coverage/accuracy trade-off, not a free lunch); the Bitcoin number applies to every prediction,
@@ -333,6 +339,27 @@ directory exists to catch. What survived: Bitcoin improves robustly (58.1% → 6
 only 32% of CPCV combinations), Brent gets worse (loses in 79%). Denoising is now the third
 distinct technique (with bootstrap confidence gating and metric-learned analog selection) found
 to specifically help Bitcoin and nothing else.
+
+**Finding 14 — a volume-surprise gate is the strongest, most universal result in this whole
+investigation.** `volume_surprise_gate.py` gates karcher on trading VOLUME — a signal of a
+genuinely different kind from every price/return-derived feature tried so far. Feature:
+today's volume as a z-score against its trailing 20-day mean (causal), split on a causal
+expanding median. Unlike every other gate tried (wind t-stat, bootstrap spread, raw analog
+spread, realized-vol regime, VIX — findings 4, 6, 9, 10, 12), this one is CPCV-robust on **all
+three** assets tested, not just one or two:
+
+| asset | high-volume-surprise median dir. acc. (CPCV) | low-volume-surprise median |
+|---|---|---|
+| S&P 500 | **60.0%** | 37.5% |
+| Brent | **70.7%** | 50.0% |
+| Bitcoin | **62.5%** | 44.4% |
+
+Mechanism: unusually high volume is a classic proxy for new information hitting the market
+(earnings, news, institutional flow); on those days a short-term analog continuation is more
+likely to actually play out than on a quiet, low-volume day where the next move is closer to
+noise. This single, model-free gate beats every learned correction/weighting/filter tried in
+findings 2, 3, 5, 7, and the deep models in finding 11 — and it generalizes where nothing else
+did.
 
 ## Layout
 
