@@ -420,6 +420,23 @@ A second technique in the "change what counts as similar" family (after #8), spe
 500 this time rather than Bitcoin — reinforcing that this category, not direct correction, is
 where real complements to the base method live.
 
+**Finding 19 — swapping diffusion for a Transformer masked-autoencoder as the representation
+learner doesn't work on any asset.** `transformer_mae_metric.py` is the direct parallel to
+finding 18: same analog-selection mechanism, but the similarity feature comes from a small
+Transformer encoder pretrained with a masked-autoencoding pretext task (mask one of the 3
+delay-embedding coordinates, predict it from the other two; pooled encoder output = feature)
+instead of a diffusion denoiser's hidden activation. CPCV-confirmed negative, everywhere:
+
+| asset | plain-Euclidean metric | Transformer-MAE metric |
+|---|---|---|
+| Brent | 75.0% | 60.0% (loses in 64% of combos) |
+| S&P 500 | 57.5% | 55.0% (loses in 46% of combos) |
+| Bitcoin | 67.5% | 57.5% (loses in 71% of combos) |
+
+Between the two representation-learning approaches tried as a similarity metric, only the
+diffusion denoiser's learned feature (finding 18) captured something useful; the masked-
+autoencoding Transformer's pooled embedding did not, on any of the three assets.
+
 ## Layout
 
 ```
