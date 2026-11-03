@@ -301,6 +301,26 @@ More capacity did not help, because capacity was never the bottleneck: ten prior
 learnable signal much beyond karcher's own historical average. This matches the broader literature on noisy daily financial targets at this sample size:
 model complexity tends to hurt, not help, once the simpler methods have already been tried.
 
+**Finding 12 — VIX (a cross-asset signal, unlike every other feature tried here) doesn't beat
+or add to the bootstrap gate on S&P 500.** `vix_cross_asset_gate.py` tests VIX level and 5-day
+VIX change as gates, motivated by the literature's repeated use of VIX as an S&P 500 predictor.
+VIX alone (best bucket 58.3% dir. acc., n=12) is weaker than the bootstrap gate (67.6%), and
+combining both (tight analog spread + rising VIX) gives 57.9% — worse than the bootstrap gate
+standalone. VIX doesn't carry information beyond what the analogs' own internal agreement
+already captures for this asset, at least at this horizon.
+
+**Current best validated numbers, for reference:**
+
+| asset | before (Fréchet, the method's original headline output) | karcher alone | best AI-complemented |
+|---|---|---|---|
+| Brent | 35% dir. acc. | **60.0%** (CPCV-robust) | — (already robust, no AI improvement found) |
+| S&P 500 | 45% | 50.0% (CPCV median) | **67.6%** (bootstrap confidence gate, on the ~56% of days it's confident) |
+| Bitcoin | 40% | 50.0% (CPCV median, not robust) | **64.3%** (metric-learned analog selection, CPCV-robust: 0% loss rate vs. default) |
+
+The S&P 500 number applies only to the subset of days the gate flags as confident (a
+coverage/accuracy trade-off, not a free lunch); the Bitcoin number applies to every prediction,
+since it changes the method itself rather than gating when to use it.
+
 ## Layout
 
 ```
