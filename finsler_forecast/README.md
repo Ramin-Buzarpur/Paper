@@ -399,6 +399,27 @@ If this becomes a paper, finding 14 is the headline result; findings 6, 8 and 13
 asset-specific appendix; findings 1-5, 7, 9-12, 15-17 are the (honestly reported) negative
 space that makes the positive results credible rather than cherry-picked.
 
+**Finding 18 — a diffusion-score-based similarity metric for analog selection robustly fixes
+S&P 500.** `diffusion_score_metric.py` is a different combination than finding 8's learned
+coordinate weights, and critically different from a diffusion *scenario generator* (which
+would replace the true historical continuations with synthetic ones — the user's own earlier
+diffusion+RL attempt, which underperformed for exactly that reason). Here, a small unconditional
+DDPM is trained on the engine's 3D delay-embedding; its denoiser's hidden-layer activation at a
+fixed small noise level becomes a learned "diffusion feature" for each point, and Euclidean
+distance in that feature space replaces plain distance for picking the K=7 analogs. Their true
+historical continuations are still averaged exactly as before — only *what counts as similar*
+changes. CPCV-confirmed:
+
+| asset | plain-Euclidean metric | diffusion-score metric |
+|---|---|---|
+| Brent | 75.0% | 70.0% (worse, loses in 46% of combos) |
+| S&P 500 | 57.5% | **65.0%** (robust win, loses in 0% of combos) |
+| Bitcoin | 67.5% | 65.0% (worse, loses in 64% of combos) |
+
+A second technique in the "change what counts as similar" family (after #8), specific to S&P
+500 this time rather than Bitcoin — reinforcing that this category, not direct correction, is
+where real complements to the base method live.
+
 ## Layout
 
 ```
