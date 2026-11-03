@@ -280,6 +280,27 @@ both are asset-specific, not universal. Every attempt to make the forecast's *va
 failed; what worked was either deciding *when* to trust it (#6) or changing *which* historical
 analogs count as similar in the first place (#8).
 
+**Finding 11 — heavier models (LSTM, Transformer) directly on raw returns don't help either,
+and actually underperform a trivial baseline.** `deep_direction_classifier.py` trains an LSTM
+and a small Transformer encoder on 60-day windows of raw daily log-returns (class-balanced
+loss), retrained periodically on an expanding walk-forward window, to classify 3-day-ahead
+direction — a genuinely heavier model than anything else tried here (minutes of GPU training
+per asset vs. the closed-form/shallow-tree methods elsewhere in this repo).
+
+| asset | LSTM dir. acc. | Transformer dir. acc. | trivial majority-class baseline |
+|---|---|---|---|
+| Brent | 52.5% | 50.0% | 52.5% |
+| S&P 500 | 55.9% | 47.9% | 55.9% |
+| Bitcoin | 47.6% | 49.2% | 50.2% |
+
+Both models land at or below the baseline of just always predicting the majority class in the
+training window; the Transformer's output probabilities have almost no spread (`prob_std` as
+low as 0.006) — it isn't learning a signal, it's collapsing toward a near-constant prediction.
+More capacity did not help, because capacity was never the bottleneck: ten prior experiments
+(findings 1-10) already established that the available features and raw returns don't carry
+learnable signal much beyond karcher's own historical average. This matches the broader literature on noisy daily financial targets at this sample size:
+model complexity tends to hurt, not help, once the simpler methods have already been tried.
+
 ## Layout
 
 ```
