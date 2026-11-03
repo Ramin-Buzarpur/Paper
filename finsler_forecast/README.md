@@ -630,14 +630,16 @@ pip install -r requirements.txt
 streamlit run finsler_forecast/app.py
 ```
 
-## Presentation dashboard (the 17-method investigation above)
+## Presentation dashboard (the 26-method investigation above)
 
 ```bash
-python finsler_forecast/generate_dashboard_data.py   # refresh cached numbers (~1-2 min)
+python finsler_forecast/generate_dashboard_data.py   # refresh cached numbers (a few minutes)
 streamlit run finsler_forecast/research_dashboard.py
 ```
 
-A standalone, presentation-ready view of findings 1-17: before/after bars per asset, CPCV
-robustness box plots, volume/bootstrap gate bucket charts, and the full 17-method pass/fail
-table. Reads from the cached `dashboard_data.json` so it loads instantly — re-run the generator
-script to refresh the numbers against current market data before presenting.
+A standalone, presentation-ready view of all 26 findings: a progression chart (original method
+→ naive → karcher → volume gate → final best), a per-asset final-best summary bar, CPCV
+robustness box plots for the base method/diffusion-metric/diffusion-anomaly-gate, volume/
+bootstrap gate bucket charts, the S&P 500 diffusion+volume stack, and the full 26-method
+pass/fail table. Reads from the cached `dashboard_data.json` so it loads instantly — re-run the
+generator script to refresh the numbers against current market data before presenting.

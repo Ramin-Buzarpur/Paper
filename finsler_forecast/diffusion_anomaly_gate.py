@@ -177,9 +177,10 @@ def causal_gate(df, min_train=20):
     return pd.DataFrame(rows)
 
 
-for ticker, name in [("BZ=F", "Brent"), ("^GSPC", "S&P500"), ("BTC-USD", "Bitcoin")]:
-    t0 = time.time()
-    df = collect(ticker, name)
-    g = causal_gate(df)
-    print(f"\n=== {name} (n={len(df)}, {time.time()-t0:.0f}s): diffusion-atypicality gate on karcher ===")
-    print(g.to_string(index=False))
+if __name__ == "__main__":
+    for ticker, name in [("BZ=F", "Brent"), ("^GSPC", "S&P500"), ("BTC-USD", "Bitcoin")]:
+        t0 = time.time()
+        df = collect(ticker, name)
+        g = causal_gate(df)
+        print(f"\n=== {name} (n={len(df)}, {time.time()-t0:.0f}s): diffusion-atypicality gate on karcher ===")
+        print(g.to_string(index=False))

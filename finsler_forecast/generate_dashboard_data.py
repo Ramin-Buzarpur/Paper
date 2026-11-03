@@ -17,6 +17,9 @@ import yfinance as yf
 
 from data import download_close_prices
 from geometry import FinslerRandersGeodesicEngine
+import diffusion_score_metric as dsm
+import diffusion_anomaly_gate as dag
+import diffusion_volume_stack as dvs
 
 HORIZON = 3
 N_FOLDS = 80
@@ -115,10 +118,58 @@ def causal_bucket(df, col, min_train=20):
     }
 
 
+def diffusion_metric_cpcv(ticker, name_short):
+    """Finding 18: diffusion-score similarity metric vs. plain Euclidean, CPCV distributions."""
+    df = dsm.collect(ticker, name_short)
+    c = dsm.cpcv(df)
+    euclid = c[c.method == "euclid_pred"]["dir_acc"].tolist()
+    diff = c[c.method == "diff_pred"]["dir_acc"].tolist()
+    return {"euclid_cpcv": euclid, "diffusion_metric_cpcv": diff}
+
+
+def diffusion_volume_stack_bucket(name_short):
+    """Finding 20: diffusion-metric + volume-surprise gate stack (S&P 500 only, where it was found)."""
+    df = dvs.collect("^GSPC", name_short, k_analogs=7)
+    c = dvs.cpcv_stack(df)
+    high = c[c.bucket == "high"]["dir_acc"]
+    low = c[c.bucket == "low"]["dir_acc"]
+    return {
+        "high_volume": {"median": float(high.median()), "n_combos": int(len(high))},
+        "low_volume": {"median": float(low.median()), "n_combos": int(len(low))},
+    }
+
+
+def diffusion_anomaly_gate_cpcv(ticker, name_short):
+    """Finding 26: diffusion reconstruction-error confidence gate, CPCV distributions per bucket."""
+    df = dag.collect(ticker, name_short)
+    vals = df["atypicality"].to_numpy()
+    min_train = 20
+    bucket = np.full(len(df), "warmup", dtype=object)
+    for i in range(min_train, len(df)):
+        bucket[i] = "high_atypical" if vals[i] >= np.median(vals[:i]) else "low_typical"
+    work = df.iloc[min_train:].copy()
+    work["bucket"] = bucket[min_train:]
+    n = len(work)
+    edges = np.linspace(0, n, N_BLOCKS + 1).astype(int)
+    blocks = [np.arange(edges[b], edges[b + 1]) for b in range(N_BLOCKS)]
+    out = {"low_typical": [], "high_atypical": []}
+    for combo in itertools.combinations(range(N_BLOCKS), K_TEST):
+        idx = np.concatenate([blocks[b] for b in combo])
+        sub = work.iloc[idx]
+        for b in ("low_typical", "high_atypical"):
+            bsub = sub[sub.bucket == b]
+            if len(bsub) < 4:
+                continue
+            up = bsub["karcher_pred"] > bsub["current_price"]
+            out[b].append(float((up == bsub["actual_up"]).mean()))
+    return {"low_typical_cpcv": out["low_typical"], "high_atypical_cpcv": out["high_atypical"]}
+
+
 def main():
     result = {}
     for ticker, name, freq in ASSETS:
         print(f"=== {name} ===")
+        name_short = name.replace(" Crude Oil", "").replace(" 500", "500")
         df = collect_folds(ticker, name, freq)
         entry = {
             "ticker": ticker,
@@ -131,8 +182,16 @@ def main():
             "volume_gate": causal_bucket(df, "vol_z"),
             "bootstrap_gate": causal_bucket(df, "boot_spread"),  # note: "high" boot_spread = less confident
         }
+        print("  [finding 18] diffusion-score metric...")
+        entry.update(diffusion_metric_cpcv(ticker, name_short))
+        print("  [finding 26] diffusion-anomaly gate...")
+        entry.update(diffusion_anomaly_gate_cpcv(ticker, name_short))
+        if name == "S&P 500":
+            print("  [finding 20] diffusion-metric + volume gate stack...")
+            entry["diffusion_volume_stack"] = diffusion_volume_stack_bucket(name_short)
         result[name] = entry
-        print(json.dumps({k: v for k, v in entry.items() if k not in ("karcher_cpcv", "naive_cpcv")}, indent=2))
+        print(json.dumps({k: v for k, v in entry.items()
+                           if not (isinstance(v, list) or k.endswith("_cpcv"))}, indent=2))
 
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard_data.json")
     with open(out_path, "w") as f:

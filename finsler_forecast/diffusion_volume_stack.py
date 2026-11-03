@@ -107,15 +107,16 @@ def cpcv_stack(df, n_blocks=8, k_test=2, min_train=20):
     return pd.DataFrame(rows)
 
 
-print("\n=== Step 1: CPCV-confirm diffusion-metric + volume gate stack (S&P 500, K=7) ===")
-df7 = collect("^GSPC", "S&P 500", k_analogs=7)
-c7 = cpcv_stack(df7)
-h7 = c7[c7.bucket == "high"]["dir_acc"]; l7 = c7[c7.bucket == "low"]["dir_acc"]
-print(f"high-volume median={h7.median():.3f} (n_combos={len(h7)})  low-volume median={l7.median():.3f} (n_combos={len(l7)})")
+if __name__ == "__main__":
+    print("\n=== Step 1: CPCV-confirm diffusion-metric + volume gate stack (S&P 500, K=7) ===")
+    df7 = collect("^GSPC", "S&P 500", k_analogs=7)
+    c7 = cpcv_stack(df7)
+    h7 = c7[c7.bucket == "high"]["dir_acc"]; l7 = c7[c7.bucket == "low"]["dir_acc"]
+    print(f"high-volume median={h7.median():.3f} (n_combos={len(h7)})  low-volume median={l7.median():.3f} (n_combos={len(l7)})")
 
-print("\n=== Step 2: sweep K (number of analogs) for the diffusion-metric, S&P 500 ===")
-for k_val in (5, 7, 10, 15, 20):
-    dfk = collect("^GSPC", "S&P 500", k_analogs=k_val)
-    up = dfk["diff_pred"] > dfk["current_price"]
-    acc = float((up == dfk["actual_up"]).mean())
-    print(f"K={k_val:2d}  n={len(dfk):3d}  dir_acc={acc:.3f}")
+    print("\n=== Step 2: sweep K (number of analogs) for the diffusion-metric, S&P 500 ===")
+    for k_val in (5, 7, 10, 15, 20):
+        dfk = collect("^GSPC", "S&P 500", k_analogs=k_val)
+        up = dfk["diff_pred"] > dfk["current_price"]
+        acc = float((up == dfk["actual_up"]).mean())
+        print(f"K={k_val:2d}  n={len(dfk):3d}  dir_acc={acc:.3f}")

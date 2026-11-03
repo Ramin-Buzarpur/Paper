@@ -184,11 +184,12 @@ def cpcv(df, n_blocks=8, k_test=2):
     return pd.DataFrame(rows)
 
 
-for ticker, name in [("BZ=F", "Brent"), ("^GSPC", "S&P500"), ("BTC-USD", "Bitcoin")]:
-    t0 = time.time()
-    df = collect(ticker, name)
-    c = cpcv(df)
-    e = c[c.method == "euclid_pred"]["dir_acc"]
-    d = c[c.method == "diff_pred"]["dir_acc"]
-    print(f"{name:10s} n={len(df):3d}  euclid median={e.median():.3f}  diffusion-metric median={d.median():.3f}  "
-          f"diffusion loses in {float((d.to_numpy() < e.to_numpy()).mean()):.2f} of {len(e)} CPCV combos  ({time.time()-t0:.0f}s)")
+if __name__ == "__main__":
+    for ticker, name in [("BZ=F", "Brent"), ("^GSPC", "S&P500"), ("BTC-USD", "Bitcoin")]:
+        t0 = time.time()
+        df = collect(ticker, name)
+        c = cpcv(df)
+        e = c[c.method == "euclid_pred"]["dir_acc"]
+        d = c[c.method == "diff_pred"]["dir_acc"]
+        print(f"{name:10s} n={len(df):3d}  euclid median={e.median():.3f}  diffusion-metric median={d.median():.3f}  "
+              f"diffusion loses in {float((d.to_numpy() < e.to_numpy()).mean()):.2f} of {len(e)} CPCV combos  ({time.time()-t0:.0f}s)")
