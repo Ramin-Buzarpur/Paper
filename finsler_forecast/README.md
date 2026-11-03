@@ -321,6 +321,19 @@ The S&P 500 number applies only to the subset of days the gate flags as confiden
 coverage/accuracy trade-off, not a free lunch); the Bitcoin number applies to every prediction,
 since it changes the method itself rather than gating when to use it.
 
+**Finding 13 — causal denoising of the embedding (not the forecast target) is a third
+Bitcoin-specific win, and a cautionary tale about validation discipline.**
+`causal_denoising_experiment.py` smooths the log-returns used for neighbour search with a
+causal (one-sided) EMA — never the actual historical returns being averaged for the forecast —
+with the smoothing span picked by nested validation. A first, naive pass (picking the span that
+looked best over the whole backtest, no nested validation) made it look like this helped S&P
+500 (48.7% → 56.2%). Redone properly and CPCV-checked, that apparent gain disappeared entirely
+(51.7% either way) — exactly the failure mode the nested/CPCV discipline throughout this
+directory exists to catch. What survived: Bitcoin improves robustly (58.1% → 64.6%, losing in
+only 32% of CPCV combinations), Brent gets worse (loses in 79%). Denoising is now the third
+distinct technique (with bootstrap confidence gating and metric-learned analog selection) found
+to specifically help Bitcoin and nothing else.
+
 ## Layout
 
 ```
