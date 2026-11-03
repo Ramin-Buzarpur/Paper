@@ -499,6 +499,27 @@ Curvature information doesn't add anything beyond what finding 18's position-onl
 metric already captures. Included in full — bug and all — because methodological discipline is
 as much a finding here as the numbers.
 
+**Finding 25 — fractional differentiation (de Prado) as the embedding input: no improvement.**
+`fractional_differentiation_metric.py` replaces plain log-returns (d=1 differencing) with
+Fixed-Width-Window fractional differentiation, a well-established technique from "Advances in
+Financial Machine Learning": d=1 over-differences and destroys memory, so the literature argues
+for the smallest d achieving stationarity (found causally per-origin via an ADF-test grid
+search). Caught a second index-alignment bug on the way (the fracdiff array was only extended
+on the days d* was re-picked, so folds in between ran against a too-short array and silently
+returned zero analogs — caught because almost every fold was empty; fixed by decoupling the
+periodic d* search from the fracdiff series computation itself, redone every fold). CPCV-
+confirmed result with the bug fixed, causal d* typically landing around 0.2-0.3 (confirming de
+Prado's point that d=1 is over-differencing):
+
+| asset | plain log-return | fracdiff (no network) | fracdiff (with network) |
+|---|---|---|---|
+| Brent | 75.0% | 65.0% (loses 75%) | 70.0% (loses 46%) |
+| S&P 500 | 57.5% | 60.0% (loses 43%) | 65.0% (loses 0%, ties finding 18, doesn't beat it) |
+| Bitcoin | 67.5% | 62.5% (loses 64%) | 65.0% (loses 64%) |
+
+A well-established technique elsewhere in quant finance that doesn't add information beyond
+what plain log-returns plus a diffusion-learned metric already capture, on this specific task.
+
 ## Layout
 
 ```
