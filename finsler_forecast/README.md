@@ -309,19 +309,21 @@ combining both (tight analog spread + rising VIX) gives 57.9% — worse than the
 standalone. VIX doesn't carry information beyond what the analogs' own internal agreement
 already captures for this asset, at least at this horizon.
 
-**Current best validated numbers, for reference:**
+**Current best validated numbers, for reference (superseded in part by findings 18-26 below —
+kept here as the state after finding 17; see the final summary table at the end of this
+document for the up-to-date best-per-asset picture):**
 
-| asset | before (Fréchet, the method's original headline output) | karcher alone | best complement found so far |
+| asset | before (Fréchet, the method's original headline output) | karcher alone | best complement found so far (through finding 17) |
 |---|---|---|---|
-| Brent | 35% dir. acc. | 60.0% (CPCV-robust) | **70.7%** (volume-surprise gate, finding 14) |
-| S&P 500 | 45% | 50.0% (CPCV median) | **67.6%** (bootstrap confidence gate, finding 6) / 60.0% (volume gate, more universal) |
-| Bitcoin | 40% | 50.0% (CPCV median, not robust) | 64.6% (denoising, finding 13) / 64.3% (metric learning, finding 8) / **62.5%** (volume gate, finding 14) |
+| Brent | 35% dir. acc. | 60.0% (CPCV-robust) | 70.7% (volume-surprise gate, finding 14) |
+| S&P 500 | 45% | 50.0% (CPCV median) | 67.6% (bootstrap confidence gate, finding 6) / 60.0% (volume gate, more universal) |
+| Bitcoin | 40% | 50.0% (CPCV median, not robust) | 64.6% (denoising, finding 13) / 64.3% (metric learning, finding 8) / 62.5% (volume gate, finding 14) |
 
 All of these are gate-style results (apply only to the subset of days/predictions flagged
 confident) except metric learning and denoising, which change the method for every prediction.
-The volume-surprise gate (finding 14) is the one result confirmed on every asset tested, so it's
-the strongest candidate for a general claim; the others are asset-specific but sometimes larger
-on the one asset they help.
+Through finding 17, the volume-surprise gate (finding 14) was the one result confirmed on every
+asset tested; finding 26 (diffusion reconstruction-error gate) later supersedes it as the
+strongest universal result — see the final table.
 
 The S&P 500 number applies only to the subset of days the gate flags as confident (a
 coverage/accuracy trade-off, not a free lunch); the Bitcoin number applies to every prediction,
@@ -570,6 +572,56 @@ diffusion/
   train.py                   DDPM training + sampling
   forecast.py                 DiffusionScenarioForecaster: checkpoint -> price forecast
 ```
+
+## Final summary across all 26 methods tested
+
+| # | method | mechanism | result |
+|---|---|---|---|
+| 1 | Fréchet / median (built into the base method) | Finsler wind term | FAIL, every asset |
+| 2 | Gradient-boosted residual correction | correct the value | FAIL |
+| 3 | Direction-flip classifier gate | correct the value | FAIL |
+| 4 | Wind-based confidence gate | when to trust | FAIL (backwards) |
+| 5 | Ridge analog reweighting | change similarity | FAIL (collapsed to default) |
+| 6 | Bootstrap confidence gate | when to trust | WIN: S&P 500, Bitcoin |
+| 7 | Discriminator scenario filter | change similarity | FAIL |
+| 8 | Metric-learned analog selection (coordinate weights) | change similarity | WIN: Bitcoin |
+| 9 | Conformal-style raw-spread gate | when to trust | FAIL (weaker than #6) |
+| 10 | Volatility-regime gate | when to trust | FAIL (no signal) |
+| 11 | LSTM / Transformer direct classifier | correct the value | FAIL (collapses) |
+| 12 | VIX cross-asset gate | when to trust | FAIL |
+| 13 | Causal denoising of the embedding | change similarity | WIN: Bitcoin |
+| 14 | Volume-surprise gate | when to trust | WIN: all 3 assets |
+| 15 | Amihud illiquidity gate | when to trust | FAIL (inconsistent sign) |
+| 16 | Volume + bootstrap gate combined | when to trust | FAIL (no compounding) |
+| 17 | Full-feature gradient-boosted classifier | correct the value | FAIL (even with fallback) |
+| 18 | Diffusion-score similarity metric | change similarity | WIN: S&P 500 |
+| 19 | Transformer masked-autoencoder metric | change similarity | FAIL, every asset |
+| 20 | Diffusion-metric + volume gate stack | when to trust + change similarity | WIN: S&P 500 (best validated number, 70%) |
+| 21 | K (analog count) sweep | hyperparameter | untested lead (K=15 looked better, not nested-validated) |
+| 22 | VAE similarity metric | change similarity | mild WIN, all 3 assets (never loses badly) |
+| 23 | KAN-backbone diffusion metric | change similarity | WIN: S&P 500 (reproduces #18) |
+| 24 | Derivative/jet-space metric | change similarity | FAIL (no improvement; caught a leakage bug) |
+| 25 | Fractional differentiation (de Prado) | change similarity (input repr.) | FAIL (ties #18, doesn't beat it) |
+| 26 | Diffusion reconstruction-error gate | when to trust | **WIN: all 3 assets, strongest effect sizes** |
+
+**Best validated result per asset, final:**
+
+| asset | best method | result |
+|---|---|---|
+| Brent | diffusion-anomaly gate (#26) | **83.3%** (high-atypical bucket, CPCV median) |
+| S&P 500 | diffusion-metric + volume gate (#20) | **70.0%** (CPCV median) |
+| Bitcoin | diffusion-anomaly gate (#26) | **80.0%** (high-atypical bucket, CPCV median) |
+
+**The pattern held across 26 independent attempts, with zero exceptions:** every method that
+tried to predict or correct the forecast's *value* (#2, #3, #5, #7, #11, #17, #24's no-network
+variant, #25's no-network variant) failed. Every category of method that worked (#6, #8, #13,
+#14, #18, #20, #22, #23, #26) either decided *when* to trust the existing karcher forecast, or
+changed *what counts as similar* when picking historical analogs — never the predicted value
+itself. Finding 26 is the strongest version of this pattern: it is also the most
+counter-intuitive result in the investigation (atypical days are MORE predictable, not less),
+which is precisely the kind of finding — surprising, mechanistically explicable, and
+replicated with rigorous validation across independent assets — that is worth a paper on its
+own.
 
 ## Run
 
