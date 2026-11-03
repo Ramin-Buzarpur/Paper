@@ -437,6 +437,45 @@ Between the two representation-learning approaches tried as a similarity metric,
 diffusion denoiser's learned feature (finding 18) captured something useful; the masked-
 autoencoding Transformer's pooled embedding did not, on any of the three assets.
 
+**Finding 20 — the diffusion-score metric stacks with the volume-surprise gate: best validated
+S&P 500 number in the investigation.** `diffusion_volume_stack.py` gates finding 18's
+diffusion-metric prediction by the same causal volume-surprise split as finding 14.
+CPCV-confirmed on S&P 500: diffusion-metric alone scores 65.0% (median); gated to the
+high-volume-surprise subset, **70.0%** (median across 28 combos); the low-volume subset drops
+to 58.6%. The two independent findings compound rather than cancel. A single-pass K-sweep
+(number of analogs) also hinted that K=15 might beat the default K=7 (68.8% vs. 66.2%) — flagged
+as an untested lead, not adopted, since it hasn't been through nested validation.
+
+**Finding 21/22 — VAE as a fourth representation learner: a mild, broadly safe improvement,
+unlike diffusion's sharp asset-specific win.** `vae_similarity_metric.py` repeats findings
+18/19's setup with a VAE's latent mean as the similarity feature. CPCV-confirmed: never loses
+badly, never wins big, on any asset:
+
+| asset | plain-Euclidean | VAE-metric | VAE loses in |
+|---|---|---|---|
+| Brent | 75.0% | 72.5% | 25% of combos |
+| S&P 500 | 57.5% | 60.0% | 0% of combos |
+| Bitcoin | 67.5% | 65.0% | 25% of combos |
+
+**Finding 23 — swapping the diffusion denoiser's MLP for a Kolmogorov-Arnold Network (KAN,
+Liu et al. 2024) backbone reproduces the same S&P 500 win almost exactly.**
+`kan_similarity_metric.py` uses a simplified KAN layer (edge-wise learnable Fourier-basis
+functions, not the official B-spline KAN) in place of the MLP in finding 18, same mechanism
+otherwise. CPCV-confirmed:
+
+| asset | plain-Euclidean | KAN-metric | KAN loses in |
+|---|---|---|---|
+| Brent | 75.0% | 70.0% | 46% of combos |
+| S&P 500 | 57.5% | 65.0% | 7% of combos |
+| Bitcoin | 67.5% | 65.0% | 75% of combos |
+
+Nearly identical to the plain-MLP diffusion metric on every asset. This matters because it
+isolates WHAT is working: the S&P 500 improvement comes from learning a similarity metric via a
+generative/denoising training objective, not from any specific network architecture (MLP vs.
+KAN gives the same result); a self-supervised reconstruction objective (Transformer-MAE,
+finding 19) does not produce the same effect, so the objective — not the architecture — is
+the active ingredient.
+
 ## Layout
 
 ```
