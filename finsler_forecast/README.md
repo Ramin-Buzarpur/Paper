@@ -170,6 +170,58 @@ derived from it (as a correction, a blend feature, or now a confidence gate) inh
 The one component that holds up under every test here is the plain, wind-free karcher mean
 itself.
 
+**Finding 6 — CPCV shows Brent/S&P 500's edge is robust, Bitcoin's isn't; and a bootstrap
+confidence gate (not the wind term) actually works, on 2 of 3 assets.** `cpcv_robustness.py`
+replaces the single walk-forward path with a combinatorial purged CV: 8 chronological blocks,
+every combination of 2 held out as "test", scored independently (28 combinations per asset).
+
+| asset | karcher median dir. acc. | naive median dir. acc. | karcher loses in |
+|---|---|---|---|
+| Brent | 60.0% | 45.0% | 18% of combinations |
+| S&P 500 | 50.0% | 40.0% | 18% of combinations |
+| Bitcoin | 50.0% | 52.5% | 36% of combinations |
+
+Brent and S&P 500's edge survives being looked at from many different fold groupings. Bitcoin's
+apparent edge from the single walk-forward run (finding 1's table) does not — it was a property
+of that particular fold ordering, not something real.
+
+Separately, `bootstrap_confidence_gate.py` tries a different confidence signal than finding 5's
+wind-based one: resample the K analogs' returns with replacement (200 times) and use the spread
+of the resampled means as a "how much do the analogs agree with each other" signal, picked
+causally (an expanding median, no look-ahead). Unlike the wind-based gate, this one works:
+
+| asset | tight-spread (confident) dir. acc. | wide-spread (unsure) dir. acc. |
+|---|---|---|
+| S&P 500 | **67.6%** | 34.6% |
+| Bitcoin | **59.4%** | 46.4% |
+| Brent | 57.9% | 63.6% (reversed) |
+
+Two out of three assets show a real, large gap — when the K analogs agree with each other, trust
+karcher more; when they don't, it's closer to a coin flip. Brent, the asset with the strongest
+raw edge, doesn't show this pattern. So: a genuinely useful, AI-free confidence signal, but not
+universal — worth combining with the per-asset CPCV result above (e.g. gate on BTC/S&P 500 where
+both the edge and the confidence signal check out, trust Brent's karcher output unconditionally
+since it's already robust without gating).
+
+**Finding 7 — a DFMC-TimeGAN-style discriminator filter on the analogs doesn't move the needle.**
+`discriminator_scenario_filter.py` tests whether AI can help in scenario *analysis* rather than
+correction: train a small classifier to tell a real analog continuation apart from an incoherent
+one (random bootstrap draws of individual historical returns), then re-weight the K analogs by
+that "realism" score before averaging, instead of equal weight. Tested on Brent, S&P 500 and
+Bitcoin, the realism-weighted mean is statistically indistinguishable from plain karcher on all
+three — the classifier can't separate the two classes well enough, on simple path features
+(cumulative return, path vol, max step, autocorrelation), to produce weights that differ from
+uniform in any way that matters.
+
+**Where this leaves things:** across seven independent attempts (ai_blend, direction-flip gate,
+wind confidence gate, Ridge analog-reweighting, discriminator filter, plus CPCV and the bootstrap
+gate as *evaluation* methods rather than corrections), the only two things that held up were (a)
+the plain karcher mean itself, confirmed robust on Brent/S&P 500 by CPCV, and (b) selective
+prediction via bootstrap agreement, which works on 2 of 3 assets. Every attempt to make the
+forecast itself smarter with AI — correcting it, reweighting its inputs, or filtering its inputs
+for plausibility — failed or was a no-op. That is the honest result of this line of
+investigation, not a setup for a future success.
+
 ## Layout
 
 ```
