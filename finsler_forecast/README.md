@@ -476,6 +476,29 @@ KAN gives the same result); a self-supervised reconstruction objective (Transfor
 finding 19) does not produce the same effect, so the objective — not the architecture — is
 the active ingredient.
 
+**Finding 24 — adding local derivatives (velocity, acceleration) to the similarity space adds
+nothing new, and this finding caught a real leakage bug on the way.** `derivative_jet_metric.py`
+extends each embedded point with its local first derivative (velocity, already implicit in the
+engine's wind term) and second derivative (acceleration/curvature, genuinely new — the base
+method never uses it), tested both as a fixed closed-form distance (no network) and as input
+to the same diffusion-metric-learner as finding 18 (with a network).
+
+The first version of this script computed derivatives with FORWARD differences, which for the
+query point leaks tomorrow's return into today's similarity feature — it produced an
+implausible ~90% accuracy on all three assets with 0% CPCV loss everywhere. This is exactly the
+kind of result this investigation's discipline exists to catch: fixed to backward (causal)
+differences, the real result is unremarkable:
+
+| asset | position-only | +derivatives (no network) | +derivatives (network) |
+|---|---|---|---|
+| Brent | 75.0% | 65.0% (worse) | 75.0% (tie) |
+| S&P 500 | 57.5% | 60.0% (mild) | 65.0% (same level as finding 18, not better) |
+| Bitcoin | 67.5% | 65.0% (worse) | 65.0% (worse) |
+
+Curvature information doesn't add anything beyond what finding 18's position-only diffusion
+metric already captures. Included in full — bug and all — because methodological discipline is
+as much a finding here as the numbers.
+
 ## Layout
 
 ```
