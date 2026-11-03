@@ -361,6 +361,44 @@ noise. This single, model-free gate beats every learned correction/weighting/fil
 findings 2, 3, 5, 7, and the deep models in finding 11 — and it generalizes where nothing else
 did.
 
+**Finding 15 — Amihud illiquidity is weaker than, and inconsistent with, the volume-surprise
+gate.** `amihud_illiquidity_gate.py` tests `|return| / dollar volume`, a standard asset-pricing
+liquidity measure, as a gate. The sign isn't even consistent across assets: low illiquidity
+(calmer days) is better for S&P 500 (57.1% vs. 46.9%) and Brent (66.7% vs. 50.0%), but HIGH
+illiquidity is better for Bitcoin (61.5% vs. 44.1%). Not usable as a universal signal.
+
+**Finding 16 — combining the volume gate and the bootstrap gate doesn't compound.**
+`combined_volume_bootstrap_gate.py` splits into a 2x2 (high/low volume x tight/wide bootstrap
+spread). The "both agree" bucket is roughly in line with the volume gate alone, not meaningfully
+better, on S&P 500 (65.2% vs. 60.0% standalone) and Bitcoin (64.3% vs. 62.5%); on Brent the best
+bucket is actually "high-volume + wide-spread" (75.0%, but n=12) rather than the intersection —
+noisy, not a clean win. The two signals aren't independent enough to stack.
+
+**Finding 17 — a full-feature, validation-gated gradient-boosted classifier (replacing karcher
+outright when it validates better, falling back otherwise) still loses.**
+`full_feature_direct_classifier.py` throws every useful feature found in this investigation
+(wind strength/t-stat, anisotropy, analog spread, momentum/vol, volume z-score, bootstrap
+spread) at a single classifier with an explicit safety fallback to karcher. It still
+underperforms karcher alone on S&P 500 (43.6% vs. 49.1%) and Bitcoin (40.0% vs. 52.7%), and ties
+on Brent. This is the clearest demonstration in the whole investigation that the bottleneck is
+not feature richness or model choice: 3-day-ahead direction is close to unlearnable from any
+combination of these features, for these assets, at this sample size.
+
+## What actually worked, after 17 methods
+
+Nothing that tried to predict or correct the forecast's *value* ever won. Everything that won
+changed *when* to trust the existing forecast or *which* historical days count as similar:
+
+1. **Bootstrap confidence gate** (#6) — S&P 500, Bitcoin.
+2. **Metric-learned analog selection** (#8) — Bitcoin only, but fixes an asset the base method
+   didn't work on at all.
+3. **Causal denoising of the embedding** (#13) — Bitcoin only.
+4. **Volume-surprise gate** (#14) — **all three assets**, the only universal result found.
+
+If this becomes a paper, finding 14 is the headline result; findings 6, 8 and 13 are the
+asset-specific appendix; findings 1-5, 7, 9-12, 15-17 are the (honestly reported) negative
+space that makes the positive results credible rather than cherry-picked.
+
 ## Layout
 
 ```
