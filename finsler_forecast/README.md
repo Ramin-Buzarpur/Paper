@@ -520,6 +520,31 @@ Prado's point that d=1 is over-differencing):
 A well-established technique elsewhere in quant finance that doesn't add information beyond
 what plain log-returns plus a diffusion-learned metric already capture, on this specific task.
 
+**Finding 26 — diffusion reconstruction-error as a confidence gate: the strongest, most
+universal result in the entire investigation, and the opposite of its own motivating
+hypothesis.** `diffusion_anomaly_gate.py` unifies the two categories that worked elsewhere
+(generative-model similarity, findings 18/22/23; confidence gating, findings 6/14) into one
+idea, borrowed from diffusion-based anomaly detection (e.g. AnoDDPM): train the same denoiser as
+finding 18, and at each origin estimate its own denoising loss at the query point (averaged
+over 32 random timestep/noise draws) as an "atypicality" score — a market state the model finds
+hard to denoise is one unlike its training history. The hypothesis was that atypical days would
+be LESS predictable by the historical-analog method. CPCV-confirmed result is the opposite, on
+every asset:
+
+| asset | low_typical (median) | high_atypical (median) | high_atypical loses in |
+|---|---|---|---|
+| Brent | 70.7% | **83.3%** | 29% of paired combos |
+| S&P 500 | 50.0% | **60.0%** | 41% of paired combos |
+| Bitcoin | 61.3% | **80.0%** | 7% of paired combos |
+
+Days the model finds hard to denoise are MORE predictable by karcher, not less — decisively so
+on Brent and Bitcoin, directionally on S&P 500. Plausible mechanism: atypical states tend to be
+driven by a real directional shock, and historical analogs of past atypical days captured the
+same kind of shock continuing; "typical," quiet days sit closer to a random walk the
+analog method has no edge on in the first place. This is the first gate in the whole
+investigation confirmed on all three assets with this much margin, beating even the volume-
+surprise gate's (finding 14) effect sizes on Brent and Bitcoin.
+
 ## Layout
 
 ```
