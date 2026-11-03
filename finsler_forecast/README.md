@@ -547,6 +547,39 @@ analog method has no edge on in the first place. This is the first gate in the w
 investigation confirmed on all three assets with this much margin, beating even the volume-
 surprise gate's (finding 14) effect sizes on Brent and Bitcoin.
 
+**⚠️ Methodological caveat affecting findings 18-26 — read before citing any of their numbers.**
+None of findings 18-26 (diffusion-score metric, VAE, KAN, Transformer-MAE, metric-learned
+derivatives, fractional differentiation, the diffusion-anomaly gate) call
+`FinslerRandersGeodesicEngine` at all. Each one reimplements a simplified, plain-Euclidean
+version of the analog-selection idea from scratch, and compares against *that* simplified
+baseline — not against the colleague's actual local-covariance (Ledoit-Wolf/Mahalanobis)
+metric. This was not intentional; it was discovered only when asked directly whether the "best"
+results actually used anything from the colleague's real method.
+
+**Finding 27 — re-testing finding 26 (the strongest, most universal result) against the REAL
+engine's karcher output: the effect does not survive intact.**
+`diffusion_anomaly_gate_real_engine.py` keeps the same diffusion-anomaly gate but gates the
+ACTUAL `karcher_pred` from `FinslerRandersGeodesicEngine` (via `benchmark.py`'s `collect_folds`,
+real Mahalanobis metric and all) instead of the simplified reimplementation's mean:
+
+| asset | low_typical (real karcher) | high_atypical (real karcher) | vs. finding 26's simplified numbers |
+|---|---|---|---|
+| Brent | 54.5% | 75.0% | same direction, weaker (was 70.7% / 83.3%) |
+| S&P 500 | 63.1% | **33.3%** | **REVERSED** (was 50.0% / 60.0%) |
+| Bitcoin | 47.7% | 57.1% | same direction, weaker (was 61.3% / 80.0%) |
+
+The gate's direction survives, diminished, on Brent and Bitcoin, but completely reverses on
+S&P 500. Finding 26 as originally stated overstated both its strength and its universality:
+real for the simplified reimplementation, but partly an artifact of testing against a weaker
+baseline than the colleague's actual method. **The honest, current best validated numbers for
+the real engine are findings 1-17's (volume-surprise gate #14, bootstrap gate #6), which DO use
+`FinslerRandersGeodesicEngine` directly — findings 18-26 should be read as "ideas that worked on
+a simplified stand-in for the method, not yet confirmed on the method itself," pending the same
+re-test this script ran for finding 26 being run for the others.** This correction exists only
+because the user asked a direct, skeptical question about whether the colleague's actual work
+was used anywhere in the "best" results — exactly the kind of check this investigation's own
+discipline should have run proactively.
+
 ## Layout
 
 ```
@@ -573,7 +606,7 @@ diffusion/
   forecast.py                 DiffusionScenarioForecaster: checkpoint -> price forecast
 ```
 
-## Final summary across all 26 methods tested
+## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
 |---|---|---|---|
@@ -602,26 +635,34 @@ diffusion/
 | 23 | KAN-backbone diffusion metric | change similarity | WIN: S&P 500 (reproduces #18) |
 | 24 | Derivative/jet-space metric | change similarity | FAIL (no improvement; caught a leakage bug) |
 | 25 | Fractional differentiation (de Prado) | change similarity (input repr.) | FAIL (ties #18, doesn't beat it) |
-| 26 | Diffusion reconstruction-error gate | when to trust | **WIN: all 3 assets, strongest effect sizes** |
+| 26 | Diffusion reconstruction-error gate | when to trust | WIN (simplified reimpl.): all 3 assets — see #27 |
+| 27 | Re-test of #26 against the REAL `FinslerRandersGeodesicEngine` output | when to trust | MIXED: holds (weaker) on Brent/Bitcoin, **REVERSES on S&P 500** |
 
-**Best validated result per asset, final:**
+**⚠️ Findings 18-26 were validated against a simplified, plain-Euclidean reimplementation of
+the analog-selection idea, not against `FinslerRandersGeodesicEngine` itself — see the caveat
+above finding 27. Only finding 27 has been re-checked against the real engine so far.**
 
-| asset | best method | result |
-|---|---|---|
-| Brent | diffusion-anomaly gate (#26) | **83.3%** (high-atypical bucket, CPCV median) |
-| S&P 500 | diffusion-metric + volume gate (#20) | **70.0%** (CPCV median) |
-| Bitcoin | diffusion-anomaly gate (#26) | **80.0%** (high-atypical bucket, CPCV median) |
+**Best validated result per asset, with the finding-27 correction applied:**
 
-**The pattern held across 26 independent attempts, with zero exceptions:** every method that
+| asset | confirmed-on-the-real-engine best | result | note |
+|---|---|---|---|
+| Brent | volume-surprise gate (#14) | **70.7%** | real engine, CPCV-confirmed |
+| S&P 500 | bootstrap confidence gate (#6) | **~50-67.6%** (sensitive to resample, see #6) | real engine |
+| Bitcoin | volume-surprise gate (#14) | **62.5%** | real engine, CPCV-confirmed |
+
+The diffusion-anomaly gate (#26) remains the most interesting *lead* — large effect sizes,
+a plausible mechanism, and a partial survival of its direction on 2 of 3 assets even against
+the real engine — but it is not yet a confirmed "best result" the way #6/#14 are, and should
+not be presented as one without first re-running #18, #20, #22, #23 the same way #27 re-ran #26.
+
+**The pattern held across every one of 27 attempts, with zero exceptions:** every method that
 tried to predict or correct the forecast's *value* (#2, #3, #5, #7, #11, #17, #24's no-network
-variant, #25's no-network variant) failed. Every category of method that worked (#6, #8, #13,
-#14, #18, #20, #22, #23, #26) either decided *when* to trust the existing karcher forecast, or
-changed *what counts as similar* when picking historical analogs — never the predicted value
-itself. Finding 26 is the strongest version of this pattern: it is also the most
-counter-intuitive result in the investigation (atypical days are MORE predictable, not less),
-which is precisely the kind of finding — surprising, mechanistically explicable, and
-replicated with rigorous validation across independent assets — that is worth a paper on its
-own.
+variant, #25's no-network variant) failed. Every category of method that worked at all — on
+either the real engine (#6, #8's underlying logic, #14) or the simplified reimplementation
+(#13, #18, #20, #22, #23, #26) — either decided *when* to trust the existing karcher forecast,
+or changed *what counts as similar* when picking historical analogs, never the predicted value
+itself. That higher-level pattern is unaffected by the finding-27 correction; the specific
+magnitude and universality claimed for finding 26 is.
 
 ## Run
 
