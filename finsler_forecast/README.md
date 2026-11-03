@@ -244,6 +244,42 @@ first improvement that specifically targets and fixes the one asset the base met
 on, rather than amplifying an edge that already existed. It is asset-specific, not universal:
 exactly the "which assets, under which conditions" framing to report, not a general upgrade.
 
+**Finding 9 — a conformal-style gate on raw analog spread is weaker than the bootstrap gate.**
+`conformal_spread_gate.py` calibrates a nonconformity threshold on the K analogs' raw return
+spread (not the bootstrap-resampled spread of their mean) on an expanding window. It's reversed
+on Brent (confident bucket is *worse*: 42.9% vs. 75.0%), flat on S&P 500, and only weakly
+confirms the Bitcoin direction (60.0% vs. 46.7%, smaller than the bootstrap gate's 59.4% vs.
+46.4% — comparable there, but worse everywhere else). Bootstrapping the mean, not just reading
+the raw spread, is doing real work in finding 6's result.
+
+**Finding 10 — gating by realized-volatility regime finds nothing.** `volatility_regime_gate.py`
+tests the classic hypothesis that calm regimes are more forecastable than turbulent ones, via
+causal expanding terciles of 21-bar realized volatility. No usable signal: extreme buckets have
+too few folds to mean anything (down to n=1), and the pattern doesn't agree in direction across
+assets. Reported as a clean negative.
+
+## Summary across all 10 methods tested
+
+| # | method | mechanism | result |
+|---|---|---|---|
+| 1 | Fréchet / median (built into the base method) | Finsler wind term | consistently worse than naive and karcher, every asset |
+| 2 | Gradient-boosted residual correction | correct karcher's price error | no better than karcher alone, every asset |
+| 3 | Direction-flip classifier gate | flip karcher's up/down call when confident it's wrong | never beat "never flip" |
+| 4 | Wind-based confidence gate | trust karcher more when wind t-stat is high | **backwards** on the 2 best assets |
+| 5 | Ridge analog reweighting | learn per-analog weights | always collapsed to equal weight (= karcher) |
+| 6 | Bootstrap confidence gate | resample K analogs, gate on spread of the mean | **works**: S&P 500, Bitcoin (not Brent) |
+| 7 | Discriminator scenario filter | re-weight analogs by "realism" score | no different from equal weight, every asset |
+| 8 | Metric learning for analog selection | learned per-coordinate embedding weights | **works**: robustly fixes Bitcoin only; hurts Brent |
+| 9 | Conformal-style raw-spread gate | gate on K analogs' raw return spread | weaker version of #6, reversed on Brent |
+| 10 | Volatility-regime gate | gate on realized-vol tercile | no usable signal, any asset |
+
+Two genuinely new, CPCV/nested-validated positive results came out of ten independent attempts:
+selective prediction via bootstrap agreement (#6) and metric-learned analog selection (#8) — and
+both are asset-specific, not universal. Every attempt to make the forecast's *value* smarter
+(correct it, reweight its inputs by learned importance, filter its inputs by plausibility)
+failed; what worked was either deciding *when* to trust it (#6) or changing *which* historical
+analogs count as similar in the first place (#8).
+
 ## Layout
 
 ```
