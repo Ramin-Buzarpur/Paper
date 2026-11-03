@@ -222,6 +222,28 @@ forecast itself smarter with AI — correcting it, reweighting its inputs, or fi
 for plausibility — failed or was a no-op. That is the honest result of this line of
 investigation, not a setup for a future success.
 
+**Finding 8 — metric learning for *which* analogs get picked (not just how they're weighted
+afterward) robustly rescues Bitcoin specifically, while hurting/not-helping the two assets that
+already worked.** `metric_learning_analog_selection.py` is a different kind of change from
+findings 1-7: instead of reweighting or filtering the K analogs after kNN selects them, it
+changes the embedding metric used to select them — scaling the 3 delay-embedding coordinates
+`[r(t), r(t-tau), r(t-2tau)]` by a per-coordinate weight (picked by nested validation on past
+folds, from a small fixed grid) before the Euclidean kNN search. CPCV-confirmed:
+
+| asset | effect |
+|---|---|
+| Bitcoin | **robust win** — loses to the unweighted default in 0% of 28 CPCV combinations (median dir. acc. 64.3% vs. 58.1%) |
+| S&P 500 | coin flip — loses in 50% of combinations |
+| Brent | hurts — loses in 64% of combinations |
+
+The learned weight consistently down-weights the oldest lag (picks `(1.0, 1.0, 0.5)` in 43/60
+folds) — i.e. for Bitcoin specifically, the 3rd embedding coordinate (2 days back) is mostly
+noise, and dropping its influence on neighbour selection helps. This is notable because Bitcoin
+is exactly the asset whose base karcher edge did *not* survive CPCV (finding 3) — this is the
+first improvement that specifically targets and fixes the one asset the base method was weakest
+on, rather than amplifying an edge that already existed. It is asset-specific, not universal:
+exactly the "which assets, under which conditions" framing to report, not a general upgrade.
+
 ## Layout
 
 ```
