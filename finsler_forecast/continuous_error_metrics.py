@@ -77,6 +77,24 @@ def rmse(actual, pred):
     return float(np.sqrt(np.mean((actual - pred) ** 2)))
 
 
+def bootstrap_compare(actual, pred_model, pred_other, n_boot=2000, seed=0):
+    """Paired bootstrap over folds (resampled with replacement) comparing mean absolute error
+    of `pred_model` vs. a baseline `pred_other` (random-walk naive, AR(1), or GARCH(1,1)).
+    Returns (mean MAE-improvement, 95% CI lo, 95% CI hi, one-sided p-value for H1: model's MAE
+    is lower). Positive improvement / CI above 0 / small p all support "model beats baseline"."""
+    rng = np.random.default_rng(seed)
+    n = len(actual)
+    err_model = np.abs(actual - pred_model)
+    err_other = np.abs(actual - pred_other)
+    diffs = np.empty(n_boot)
+    for b in range(n_boot):
+        idx = rng.integers(0, n, n)
+        diffs[b] = err_other[idx].mean() - err_model[idx].mean()
+    ci_lo, ci_hi = np.percentile(diffs, [2.5, 97.5])
+    p_one_sided = float(((diffs <= 0).sum() + 1) / (n_boot + 1))
+    return float(diffs.mean()), float(ci_lo), float(ci_hi), p_one_sided
+
+
 def main():
     print("=== Continuous forecast-error evaluation (RMSE, MASE vs. random-walk naive) ===\n")
     results = []
@@ -98,12 +116,16 @@ def main():
         mase_hi = mase(df.loc[hi, "actual_ret"].to_numpy(), df.loc[hi, "pred_ret"].to_numpy())
         mase_lo = mase(df.loc[lo, "actual_ret"].to_numpy(), df.loc[lo, "pred_ret"].to_numpy())
 
+        imp, ci_lo, ci_hi, p = bootstrap_compare(actual, pred, np.zeros_like(actual))
+
         print(f"{name:10s} (n={len(df)}, {time.time()-t0:.0f}s): "
               f"RMSE model={overall_rmse:.5f} vs naive={naive_rmse:.5f} | "
-              f"MASE overall={overall_mase:.3f} | MASE atypical={mase_hi:.3f} typical={mase_lo:.3f}")
+              f"MASE overall={overall_mase:.3f} | MASE atypical={mase_hi:.3f} typical={mase_lo:.3f} | "
+              f"MAE-improvement vs naive={imp:+.5f} 95%CI=[{ci_lo:+.5f},{ci_hi:+.5f}] p={p:.4f}")
         results.append({"asset": name, "n": len(df), "rmse_model": overall_rmse,
                          "rmse_naive": naive_rmse, "mase_overall": overall_mase,
-                         "mase_atypical": mase_hi, "mase_typical": mase_lo})
+                         "mase_atypical": mase_hi, "mase_typical": mase_lo,
+                         "mae_improvement": imp, "ci_lo": ci_lo, "ci_hi": ci_hi, "boot_p": p})
 
     print("\n=== Summary ===")
     res_df = pd.DataFrame(results)

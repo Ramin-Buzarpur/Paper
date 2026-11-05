@@ -31,7 +31,7 @@ from arch import arch_model
 from economic_backtest import (HORIZON, embed, select_analogs, train_scorenet,
                                 full_elbo_score, download_max, M, TAU, N_TIMESTEPS, device)
 from robustness_journal_grade import ASSETS
-from continuous_error_metrics import mase, rmse
+from continuous_error_metrics import mase, rmse, bootstrap_compare
 
 warnings.filterwarnings("ignore")
 
@@ -110,12 +110,15 @@ def main():
         mase_model = mase(actual, pred_model)
         mase_garch = mase(actual, pred_garch)
         corr_atyp_vol = df[["diff_atyp", "garch_cond_vol"]].corr().iloc[0, 1]
+        imp, ci_lo, ci_hi, p = bootstrap_compare(actual, pred_model, pred_garch)
 
         print(f"{name:10s} (n={len(df)}, {time.time()-t0:.0f}s): "
               f"MASE analog={mase_model:.3f}  GARCH(1,1)={mase_garch:.3f}  "
-              f"corr(atypicality, GARCH cond.vol)={corr_atyp_vol:+.3f}")
+              f"corr(atypicality, GARCH cond.vol)={corr_atyp_vol:+.3f}  "
+              f"MAE-improvement vs GARCH={imp:+.5f} 95%CI=[{ci_lo:+.5f},{ci_hi:+.5f}] p={p:.4f}")
         results.append({"asset": name, "n": len(df), "mase_analog": mase_model,
-                         "mase_garch": mase_garch, "corr_atyp_garchvol": corr_atyp_vol})
+                         "mase_garch": mase_garch, "corr_atyp_garchvol": corr_atyp_vol,
+                         "mae_improvement": imp, "ci_lo": ci_lo, "ci_hi": ci_hi, "boot_p": p})
 
     print("\n=== Summary ===")
     res_df = pd.DataFrame(results)

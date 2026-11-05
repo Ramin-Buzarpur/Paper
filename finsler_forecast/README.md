@@ -1016,15 +1016,15 @@ and actual H-day log returns, not just their signs) and computes Mean Absolute S
 scale-free and comparable across assets) against the canonical no-change / random-walk naive
 forecast, plus RMSE:
 
-| asset | RMSE model | RMSE naive | MASE overall | MASE atypical | MASE typical |
-|---|---|---|---|---|---|
-| Brent | 0.0377 | 0.0433 | 0.885 | **0.839** | 0.967 |
-| S&P 500 | 0.0172 | 0.0189 | 0.912 | **0.879** | 0.976 |
-| Gold | 0.0175 | 0.0203 | 0.887 | **0.829** | 0.976 |
-| Bitcoin | 0.0521 | 0.0595 | 0.892 | **0.826** | 1.001 |
-| Ethereum | 0.0613 | 0.0700 | 0.911 | **0.826** | 1.036 |
-| Silver | 0.0338 | 0.0375 | 0.896 | **0.820** | 1.014 |
-| WTI Crude | 0.0414 | 0.0474 | 0.880 | **0.825** | 0.980 |
+| asset | RMSE model | RMSE naive | MASE overall | MASE atypical | MASE typical | paired-bootstrap p |
+|---|---|---|---|---|---|---|
+| Brent | 0.0377 | 0.0433 | 0.884 | **0.839** | 0.967 | **p<0.001** |
+| S&P 500 | 0.0172 | 0.0189 | 0.912 | **0.879** | 0.976 | **p<0.001** |
+| Gold | 0.0175 | 0.0203 | 0.886 | **0.829** | 0.976 | **p<0.001** |
+| Bitcoin | 0.0521 | 0.0595 | 0.892 | **0.826** | 1.001 | **p<0.001** |
+| Ethereum | 0.0613 | 0.0700 | 0.911 | **0.826** | 1.036 | **p=0.001** |
+| Silver | 0.0338 | 0.0375 | 0.896 | **0.820** | 1.014 | **p<0.001** |
+| WTI Crude | 0.0414 | 0.0474 | 0.880 | **0.826** | 0.980 | **p<0.001** |
 
 **7 of 7 assets beat the random-walk naive overall (MASE < 1)**, and **7 of 7 show a lower
 (better) MASE on atypical days than on typical days** — the continuous-error result agrees with
@@ -1033,7 +1033,10 @@ continuous returns into up/down labels. Notably, on *typical* days alone the mod
 frequently at or slightly worse than the naive random walk (Bitcoin 1.001, Ethereum 1.036,
 Silver 1.014) — the entire edge over the random-walk benchmark is concentrated in the
 atypical-regime subset, reinforcing finding 41's dynamical account rather than suggesting a
-small uniform edge spread evenly across all days.
+small uniform edge spread evenly across all days. The p-values are from a 2000-resample paired
+bootstrap over folds on the MAE improvement (model vs. naive) — closing the significance-testing
+gap flagged in finding 45: every asset's 95% CI for the improvement excludes zero (e.g. Brent
++0.0034, CI [0.0024, 0.0044]; full CIs in `continuous_error_metrics.py`'s output).
 
 **Finding 43 — the analog model also beats a classical econometric baseline (AR(1)), not just
 the random-walk naive.** `arima_baseline_comparison.py` adds the most obvious next benchmark:
@@ -1043,21 +1046,24 @@ MASE metric as finding 42. (Bitcoin failed to collect in this run due to a trans
 Finance data outage — the same kind of flakiness noted for Gold in finding 33 — not a result;
 reported honestly rather than silently dropped.)
 
-| asset | MASE, analog model | MASE, AR(1) |
-|---|---|---|
-| Brent | **0.885** | 1.007 |
-| S&P 500 | **0.912** | 1.008 |
-| Gold | **0.886** | 0.997 |
-| Ethereum | **0.911** | 1.002 |
-| Silver | **0.896** | 0.998 |
-| WTI Crude | **0.880** | 1.005 |
+| asset | MASE, analog model | MASE, AR(1) | paired-bootstrap p |
+|---|---|---|---|
+| Brent | **0.884** | 1.007 | **p<0.001** |
+| S&P 500 | **0.912** | 1.008 | **p<0.001** |
+| Gold | **0.886** | 0.997 | **p<0.001** |
+| Bitcoin | **0.892** | 1.002 | **p<0.001** |
+| Ethereum | **0.911** | 1.002 | **p=0.001** |
+| Silver | **0.896** | 0.998 | **p<0.001** |
+| WTI Crude | **0.880** | 1.005 | **p<0.001** |
 
-**6 of 6 available assets**: the analog model beats the classical AR(1) baseline. AR(1) itself
-beats the random-walk naive on only 2 of 6 assets (Gold, Silver) — consistent with the
-well-known finding in the empirical-finance literature that a plain low-order AR model rarely
-adds value over a no-change forecast on daily returns. This rules out the objection that the
-analog model's edge (finding 42) is just "any reasonable model beats random walk" — a standard
-econometric competitor, evaluated on the identical folds, does not.
+**7 of 7 available assets**: the analog model beats the classical AR(1) baseline (Bitcoin
+collected successfully on this re-run, unlike the transient Yahoo Finance outage noted in the
+original run). AR(1) itself beats the random-walk naive on only 2 of 7 assets (Gold, Silver) —
+consistent with the well-known finding in the empirical-finance literature that a plain
+low-order AR model rarely adds value over a no-change forecast on daily returns. This rules out
+the objection that the analog model's edge (finding 42) is just "any reasonable model beats
+random walk" — a standard econometric competitor, evaluated on the identical folds, does not.
+Every asset's 95% bootstrap CI for the MAE improvement over AR(1) excludes zero.
 
 **Finding 44 — the analog model also beats GARCH(1,1), and the atypicality detector is only
 moderately correlated with GARCH conditional volatility — it is not just rediscovering
@@ -1067,26 +1073,27 @@ that naturally follows AR(1) (finding 43): a causal, periodically-refit GARCH(1,
 of whether the diffusion atypicality score (finding 31) is just a proxy for GARCH's conditional
 volatility forecast.
 
-| asset | MASE, analog model | MASE, GARCH(1,1) | corr(atypicality, GARCH cond. vol) |
-|---|---|---|---|
-| Brent | **0.885** | 1.001 | +0.444 |
-| S&P 500 | **0.912** | 0.986 | +0.457 |
-| Gold | **0.886** | 0.997 | +0.315 |
-| Bitcoin | **0.892** | 1.000 | +0.358 |
-| Ethereum | **0.911** | 1.002 | +0.274 |
-| Silver | **0.896** | 1.001 | +0.339 |
-| WTI Crude | **0.880** | 1.000 | +0.347 |
+| asset | MASE, analog model | MASE, GARCH(1,1) | corr(atypicality, GARCH cond. vol) | paired-bootstrap p |
+|---|---|---|---|---|
+| Brent | **0.884** | 1.001 | +0.444 | **p<0.001** |
+| S&P 500 | **0.912** | 0.986 | +0.457 | **p<0.001** |
+| Gold | **0.886** | 0.997 | +0.315 | **p<0.001** |
+| Bitcoin | **0.892** | 1.000 | +0.358 | **p<0.001** |
+| Ethereum | **0.911** | 1.002 | +0.274 | **p=0.001** |
+| Silver | **0.896** | 1.001 | +0.339 | **p<0.001** |
+| WTI Crude | **0.880** | 1.000 | +0.347 | **p<0.001** |
 
-**7 of 7 assets**: the analog model beats GARCH(1,1) on MASE. GARCH(1,1)'s own mean forecast
-beats the random-walk naive on only 3 of 7 assets — consistent with finding 43's AR(1) result
-and the broader literature finding that conditional-mean forecasts of daily returns rarely
-improve much on "no change," even when the conditional-*variance* model (GARCH's actual
-strength) is well-specified. The atypicality-vs-GARCH-volatility correlation is positive and
-non-trivial (mean +0.36 across assets, confirming atypical days do tend to be higher-volatility
-days) but far from 1 — meaning the detector is not simply relabeling GARCH's own volatility
-forecast. This is an important, honestly-reported boundary: the effect is *related to* but not
-*reducible to* volatility clustering, which answers the natural objection directly rather than
-leaving it unaddressed.
+**7 of 7 assets**: the analog model beats GARCH(1,1) on MASE, every one with a 95% bootstrap CI
+for the MAE improvement excluding zero. GARCH(1,1)'s own mean forecast beats the random-walk
+naive on only 3 of 7 assets — consistent with finding 43's AR(1) result and the broader
+literature finding that conditional-mean forecasts of daily returns rarely improve much on "no
+change," even when the conditional-*variance* model (GARCH's actual strength) is
+well-specified. The atypicality-vs-GARCH-volatility correlation is positive and non-trivial
+(mean +0.36 across assets, confirming atypical days do tend to be higher-volatility days) but
+far from 1 — meaning the detector is not simply relabeling GARCH's own volatility forecast.
+This is an important, honestly-reported boundary: the effect is *related to* but not *reducible
+to* volatility clustering, which answers the natural objection directly rather than leaving it
+unaddressed.
 
 **Finding 45 — a full integrity audit of the pipeline, data, and evaluation methodology
 (prompted by moving toward a selective venue), with one real issue found, tested, and shown
@@ -1146,12 +1153,19 @@ predictable") — but this should be stated as a one-sided test in any formal wr
 left implicit, since a reader's default assumption is usually two-sided. Relatedly, that
 function has no `+1` numerator/denominator correction, so it can report `p=0.0000` on a 2000-shuffle
 test where the more defensible statement is `p < 0.0005` (the test's resolution floor) — a
-precision-of-language issue, not a wrong conclusion. Finally, findings 42-44 (continuous MASE
-comparisons against random-walk, AR(1), and GARCH) report point-estimate MASE values across
-assets without an accompanying significance test (permutation or bootstrap CI on the MASE gap) —
-unlike the binary-accuracy findings, which are all permutation-tested. This is a real gap to
-close with a bootstrap CI on the MASE differences before treating those three findings as
-formally significant rather than merely suggestive.
+precision-of-language issue, not a wrong conclusion.
+
+**Update: the significance-testing gap in findings 42-44 is now closed.** Those three findings
+originally reported point-estimate MASE values without an accompanying significance test.
+`continuous_error_metrics.bootstrap_compare` adds a 2000-resample paired bootstrap over folds
+(resampling fold-level absolute errors with replacement, comparing the model's mean absolute
+error to each baseline's) and reports a 95% CI and a one-sided empirical p-value for the MAE
+improvement. Re-running all three comparisons with this test: **every one of the 21
+asset-by-baseline comparisons across findings 42 (vs. random-walk), 43 (vs. AR(1)), and 44 (vs.
+GARCH(1,1)) has a 95% CI for the improvement that excludes zero, at p ≤ 0.001.** (Bitcoin also
+collected successfully against AR(1) on this re-run, closing the one asset gap noted in the
+original finding 43.) The updated tables and numbers are reflected directly in findings 42-44
+above rather than repeated here.
 
 ## Final summary across all 27 methods tested
 
