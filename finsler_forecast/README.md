@@ -869,22 +869,24 @@ evidence through its normalization term), yielding one fused "atypical" belief p
 
 | asset | best individual detector | DS-fused |
 |---|---|---|
-| Brent | 13.3pp (LOF) | **15.2pp — beats all 4** |
-| S&P 500 | 5.3pp, p=0.014 (LOF) | **6.3pp, p=0.004 — beats all 4, strongest S&P 500 result in this entire investigation** |
-| Gold | 10.4pp (Isolation Forest) | 8.8pp (close, not best) |
-| Bitcoin | 13.4pp (Isolation Forest) | 12.4pp (close) |
-| Ethereum | 13.8pp (Isolation Forest/Mahalanobis) | 12.7pp (close) |
-| Silver | 13.8pp (Mahalanobis) | 13.5pp (near-tied) |
-| WTI Crude | 10.2pp (diffusion) | 9.0pp (close) |
+| Brent | 13.5pp (Isolation Forest) | **15.6pp, p<0.0001 — beats all 4** |
+| S&P 500 | 5.3pp, p=0.013 (LOF) | **6.7pp, p=0.003 — beats all 4, strongest S&P 500 result in this entire investigation** |
+| Gold | 11.4pp (Isolation Forest) | 9.0pp (close, not best) |
+| Bitcoin | 12.6pp (Mahalanobis-PCA) | 11.9pp (close) |
+| Ethereum | 14.4pp (Isolation Forest) | 12.5pp (close) |
+| Silver | 13.8pp (Mahalanobis-PCA) | 13.1pp (near-tied) |
+| WTI Crude | 10.2pp (LOF) | 8.8pp (close) |
 
-Fusion never badly underperforms the best individual detector on any asset, and on the two
-cases where picking the right single detector mattered most — Brent, and especially S&P 500,
-the panel's persistent weak point throughout this entire investigation — fusion strictly wins.
-This is the core information-fusion thesis (combining diverse evidence sources via a principled
-rule improves worst-case robustness over relying on any single source) demonstrated
-empirically on this problem, not just asserted from the literature. This is the first result in
-the investigation that is a genuine fusion-methodology contribution rather than a comparison or
-an application of an existing technique.
+(Re-run on all 7 assets, including Gold for the first time, after finding 45's audit fix to the
+classical detectors' fit window — the pattern is unchanged, and if anything slightly stronger
+on Brent and S&P 500.) Fusion never badly underperforms the best individual detector on any
+asset, and on the two cases where picking the right single detector mattered most — Brent, and
+especially S&P 500, the panel's persistent weak point throughout this entire investigation —
+fusion strictly wins. This is the core information-fusion thesis (combining diverse evidence
+sources via a principled rule improves worst-case robustness over relying on any single
+source) demonstrated empirically on this problem, not just asserted from the literature. This
+is the first result in the investigation that is a genuine fusion-methodology contribution
+rather than a comparison or an application of an existing technique.
 
 **Finding 36 — a genuinely new market-wide insight: atypicality co-occurs across traditional
 asset classes, but crypto is decoupled from that structure.** `cross_asset_contagion.py` asks a
