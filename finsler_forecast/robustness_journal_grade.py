@@ -158,5 +158,6 @@ def run_holdout_test():
         print(f"\nFisher combined p-value on held-out data only: {combined_p:.6f}  ({len(ps)} assets)")
 
 
-run_classical_comparison()
-run_holdout_test()
+if __name__ == "__main__":
+    run_classical_comparison()
+    run_holdout_test()
