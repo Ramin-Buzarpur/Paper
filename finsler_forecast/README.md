@@ -770,7 +770,7 @@ forcing a tidy explanation the data doesn't support.
 
 **Finding 33 — the most important correction in this investigation: the effect is real, but
 it isn't specific to diffusion models, and it only partly survives a genuine held-out test.**
-`robustness_journal_grade.py` runs two tests that directly target publication-readiness.
+`robustness_journal_grade.py` runs two tests that directly target this.
 
 **(A) Classical anomaly-detector comparison.** The diffusion ELBO score vs. three standard,
 well-established anomaly detectors (Isolation Forest, Local Outlier Factor, Mahalanobis
@@ -778,16 +778,19 @@ distance in PCA space), all fit causally on the same 3D embedding:
 
 | asset | diffusion | Isolation Forest | LOF | Mahalanobis-PCA |
 |---|---|---|---|---|
-| Brent | 8.3pp | 11.7pp | 13.3pp | 13.0pp |
-| S&P 500 | 2.9pp (not significant) | significant | significant | significant |
-| Bitcoin | 10.6pp | 13.2pp | 11.7pp | 12.5pp |
-| Ethereum | 6.5pp | 13.8pp | 9.8pp | 13.8pp |
-| Silver | 10.9pp | 13.5pp | 12.4pp | 13.8pp |
-| WTI Crude | 10.2pp | 9.1pp | 10.0pp | 9.4pp |
+| Brent | 8.3pp, p<0.0001 | 13.5pp, p<0.0001 | 13.4pp, p<0.0001 | 13.1pp, p<0.0001 |
+| S&P 500 | 2.9pp, p=0.113 (not significant) | 4.8pp, **p=0.028** | 5.3pp, **p=0.013** | 5.1pp, **p=0.016** |
+| Gold | 4.9pp, **p=0.022** | 11.4pp, p<0.0001 | 7.4pp, **p=0.002** | 8.8pp, p<0.0001 |
+| Bitcoin | 11.0pp, p<0.0001 | 11.9pp, p<0.0001 | 12.0pp, p<0.0001 | 12.6pp, p<0.0001 |
+| Ethereum | 6.5pp, **p=0.027** | 14.4pp, p<0.0001 | 8.7pp, **p=0.003** | 13.8pp, p<0.0001 |
+| Silver | 10.9pp, p<0.0001 | 10.9pp, p<0.0001 | 11.1pp, p<0.0001 | 13.8pp, p<0.0001 |
+| WTI Crude | 10.1pp, p<0.0001 | 7.5pp, **p=0.002** | 10.2pp, p<0.0001 | 9.3pp, p<0.0001 |
 
-(Gold is missing — a Yahoo Finance data outage for GC=F during this run, not a result.) The
-classical detectors matched or beat the diffusion model on nearly every asset, and all three
-reached significance on S&P 500 where diffusion did not. **This means findings 18, 22, 23, and
+(Re-run in full on all 7 assets after finding 45's audit fix — strictly-causal detector fitting,
+`hist = pc[:j]` excluding today — resolving the earlier Gold data outage along the way. The
+pattern is unchanged: every asset is significant on at least one detector, S&P 500 remains the
+weakest asset throughout, and the classical detectors continue to match or beat diffusion on
+most assets.) **This means findings 18, 22, 23, and
 31's "diffusion specifically" framing was premature** — the real, robust discovery is that
 *any reasonable novelty/anomaly detector* on this delay-embedded return space finds the same
 atypicality-predictability link. That is a more honest and, arguably, a more compelling claim:
@@ -803,18 +806,19 @@ Evaluated exactly once:
 | Brent | **p=0.0005** |
 | Silver | **p=0.0065** |
 | WTI Crude | **p=0.0080** |
-| S&P 500, Bitcoin, Ethereum | not significant individually |
+| S&P 500, Gold, Bitcoin, Ethereum | not significant individually |
 
-Fisher's combined p-value across all 6 assets with available held-out data: **p=0.000024** —
-the phenomenon survives at the panel level on genuinely new data. But only half the assets
-(3 of 6) are individually significant in this single confirmatory test, despite most being
-significant (or close) on the fuller exploratory sample. Report both facts: the effect is not
-a pure artifact of exploratory multiple-testing (the panel-level result replicates
-out-of-sample), but it is also not uniformly strong enough to claim individually for every
-asset on fresh data — Bitcoin and Ethereum in particular should be described as suggestive,
-not confirmed, going forward.
+Fisher's combined p-value across all **7** assets with available held-out data (re-run after
+finding 45's audit fix, now including Gold): **p=0.000038** — the phenomenon survives at the
+panel level on genuinely new data, consistent with the original 6-asset result (p=0.000024).
+But only 3 of 7 assets are individually significant in this single confirmatory test, despite
+most being significant (or close) on the fuller exploratory sample. Report both facts: the
+effect is not a pure artifact of exploratory multiple-testing (the panel-level result
+replicates out-of-sample), but it is also not uniformly strong enough to claim individually for
+every asset on fresh data — Gold, Bitcoin, and Ethereum in particular should be described as
+suggestive, not confirmed, going forward.
 
-## Positioning for publication: a bridge between two literatures
+## A bridge between two literatures
 
 The colleague's core method (delay-embed returns, find the K nearest historical states,
 average their true continuations) is structurally identical to the **Analog Ensemble (AnEn)**
