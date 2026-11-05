@@ -87,7 +87,8 @@ def collect_with_dates(ticker, name, max_years, retrain_every=20, epochs=50):
             continue
         diff_atyp, _ = full_elbo_score(net, schedule, pc[j], seed=k), None
 
-        hist = pc[:j+1]
+        # strictly causal: today excluded from the detector fit (see audit_leakage_check.py)
+        hist = pc[:j]
         iso = -float(IsolationForest(n_estimators=100, random_state=0).fit(hist).score_samples(pc[j:j+1])[0])
         lof = -float(LocalOutlierFactor(n_neighbors=30, novelty=True).fit(hist).score_samples(pc[j:j+1])[0])
         pca = PCA(n_components=3).fit(hist)

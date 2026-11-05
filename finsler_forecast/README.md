@@ -1088,6 +1088,71 @@ forecast. This is an important, honestly-reported boundary: the effect is *relat
 *reducible to* volatility clustering, which answers the natural objection directly rather than
 leaving it unaddressed.
 
+**Finding 45 — a full integrity audit of the pipeline, data, and evaluation methodology
+(prompted by moving toward a selective venue), with one real issue found, tested, and shown
+NOT to be driving any result.** Before relying further on findings 31-44, every causal/leakage
+boundary, the statistics, and the data source were re-checked line by line rather than
+re-asserted.
+
+**What was checked and confirmed sound:**
+- *Data*: every finding uses real daily OHLC history pulled live from Yahoo Finance
+  (`yfinance`) — no synthetic or simulated price data anywhere in findings 1-44. (The
+  `diffusion/` module's synthetic DDPM-sampled scenarios are a separate, clearly-labeled
+  alternative forecasting method, never mixed into the analog-forecast findings.)
+- *Forecast-target causality*: in every script, the historical analogs used to build a
+  forecast are selected via `select_analogs(d, j, last_ok=j-1)` with a Theiler exclusion window
+  — strictly past data only, the future return being predicted is never accessible to the
+  selection step. This is the one boundary that would be fatal if violated (as the earlier,
+  already-corrected forward-difference and fracdiff-indexing bugs were), and it holds
+  throughout.
+- *Dempster-Shafer fusion math* (`dempster_shafer_fusion.py`): `ds_combine_two` was checked
+  term-by-term against the textbook Dempster's combination rule for a 2-element frame with an
+  uncertainty mass — matches exactly, including the conflict-renormalization term.
+- *Embedding/indexing* (`embed`, the `p = j + (M-1)*TAU` price-index convention): re-derived by
+  hand for M=3, TAU=1 and confirmed consistent with every consumer of `pc`.
+
+**What was found and corrected:** `robustness_journal_grade.collect_full` and
+`cross_asset_contagion.collect_with_dates` fit the three classical detectors (Isolation Forest,
+LOF, Mahalanobis-PCA) on `hist = pc[:j+1]` — a window that **includes today's own point** —
+then scored that same point with the resulting model. This is in-sample ("transductive")
+anomaly scoring, not strictly "fit on the past, score the present." It does **not** leak the
+forecast target (the future return being predicted stays strictly out of reach, per the point
+above) — it could only bias the atypicality *score* itself.
+
+`audit_leakage_check.py` re-ran the exact same folds on Brent and S&P 500 twice — once as
+originally coded (today included in the fit) and once corrected (`hist = pc[:j]`, today
+strictly excluded) — and compared the resulting accuracy gaps:
+
+| asset | detector | gap, self-inclusive (as coded) | gap, strictly causal (corrected) |
+|---|---|---|---|
+| Brent | Isolation Forest | +11.7pp | **+13.5pp** |
+| Brent | LOF | +13.3pp | +13.4pp |
+| S&P 500 | Isolation Forest | +4.0pp (p=0.0500) | **+4.8pp (p=0.0275)** |
+| S&P 500 | LOF | +5.3pp (p=0.0140) | +5.3pp (p=0.0130) |
+
+The self-inclusive and strictly-causal scores were correlated at 0.99-1.00 across both assets,
+and the corrected, strictly-causal version is, if anything, slightly **stronger** on every row
+checked — the opposite of what an inflationary leakage artifact would look like. The issue was
+real and worth finding, but it was conservative, not inflationary; it has now been fixed in both
+source files for correctness going forward. A full 7-asset re-run with the corrected code was
+not repeated for every downstream finding that touches these columns (33, 35, 36, 44) given the
+spot-check's consistency, but should be treated as a known, low-priority to-do before any final
+reporting of those specific numbers.
+
+**A separate, non-code methodological note worth stating explicitly:** `statistical_rigor.py`'s
+`permutation_test` reports a **one-sided** p-value (`(null_gaps >= observed).mean()`), consistent
+with this investigation's single, pre-specified directional hypothesis ("atypical days are MORE
+predictable") — but this should be stated as a one-sided test in any formal write-up rather than
+left implicit, since a reader's default assumption is usually two-sided. Relatedly, that
+function has no `+1` numerator/denominator correction, so it can report `p=0.0000` on a 2000-shuffle
+test where the more defensible statement is `p < 0.0005` (the test's resolution floor) — a
+precision-of-language issue, not a wrong conclusion. Finally, findings 42-44 (continuous MASE
+comparisons against random-walk, AR(1), and GARCH) report point-estimate MASE values across
+assets without an accompanying significance test (permutation or bootstrap CI on the MASE gap) —
+unlike the binary-accuracy findings, which are all permutation-tested. This is a real gap to
+close with a bootstrap CI on the MASE differences before treating those three findings as
+formally significant rather than merely suggestive.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |

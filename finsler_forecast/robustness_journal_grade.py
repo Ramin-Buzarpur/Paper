@@ -99,8 +99,12 @@ def collect_full(ticker, name, max_years, retrain_every=20, epochs=50):
         pred_up = np.mean(rets) > 0
         actual_up = actual_future_price > current_price
 
-        # classical anomaly scores, fit fresh on the SAME causal history pc[:j+1], evaluated at pc[j]
-        hist = pc[:j+1]
+        # classical anomaly scores, fit on history STRICTLY BEFORE today (pc[:j], not pc[:j+1]) so
+        # today's own point never influences the model used to score it -- audited and confirmed
+        # the earlier self-inclusive version (pc[:j+1]) gave near-identical, if anything slightly
+        # weaker, results on a spot-check (see audit_leakage_check.py), so this is a correctness
+        # tightening, not a result-changing fix.
+        hist = pc[:j]
         iso = IsolationForest(n_estimators=100, random_state=0).fit(hist)
         iso_score = -float(iso.score_samples(pc[j:j+1])[0])  # higher = more anomalous
 
