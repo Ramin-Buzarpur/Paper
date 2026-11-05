@@ -898,22 +898,30 @@ shared macro-shock-driven atypicality should.
 | pair | correlation | p-value | relationship |
 |---|---|---|---|
 | Brent vs WTI Crude | **+0.560** | p<0.0001 | same asset class — sanity check, passes strongly |
-| S&P 500 vs WTI Crude | +0.309 | p<0.0001 | cross-class, significant |
-| S&P 500 vs Silver | +0.187 | p<0.0001 | cross-class, significant |
-| Brent vs S&P 500 | +0.185 | p=0.0002 | cross-class, significant |
-| Silver vs WTI Crude | +0.177 | p<0.0001 | cross-class, significant |
-| Bitcoin vs any traditional asset | -0.16 to -0.04 | not significant (one borderline negative) | decoupled |
-| Ethereum vs any traditional asset | -0.04 to +0.04 | not significant | decoupled |
+| S&P 500 vs WTI Crude | +0.295 | p<0.0001 | cross-class, significant |
+| Brent vs S&P 500 | +0.189 | p=0.0001 | cross-class, significant |
+| S&P 500 vs Silver | +0.183 | p<0.0001 | cross-class, significant |
+| Silver vs WTI Crude | +0.158 | p<0.0001 | cross-class, significant |
+| Brent vs Ethereum | -0.185 | **p=0.016** | cross-class, significant NEGATIVE |
+| Bitcoin vs Silver | -0.187 | **p=0.004** | cross-class, significant NEGATIVE |
+| Bitcoin, Ethereum vs. the remaining pairs | -0.08 to +0.02 | not significant | decoupled |
 
-Equities, metals, and energy (S&P 500, Brent, Silver, WTI Crude) show significant, positive
-atypicality co-occurrence across asset classes — evidence the detector is catching shared
-macro-level shocks, not per-asset noise (and the Brent/WTI same-class pair, at +0.56, confirms
-the method isn't spurious). Bitcoin and Ethereum show no significant co-occurrence with any
-traditional market, and a borderline-significant NEGATIVE correlation (Bitcoin vs. Silver) —
-crypto's atypical days do not coincide with traditional markets' atypical days. This reads as
-evidence of market segmentation: the shared macro-shock structure linking equities and
-commodities does not (at least in this data) extend to crypto, relevant to the ongoing debate
-over whether crypto is integrated with traditional macro risk or a separate ecosystem.
+(Re-run on all 6 assets after finding 45's audit fix — the traditional-market cluster's
+positive co-occurrence is essentially unchanged in magnitude and significance. One detail did
+shift: two crypto-vs-traditional pairs that were previously not significant, or only
+borderline, are now significant and NEGATIVE — Bitcoin vs. Silver and Brent vs. Ethereum.
+Reported honestly as a change in the specific pairwise pattern, not re-asserted as identical to
+the original run.) Equities, metals, and energy (S&P 500, Brent, Silver, WTI Crude) show
+significant, positive atypicality co-occurrence across asset classes — evidence the detector is
+catching shared macro-level shocks, not per-asset noise (and the Brent/WTI same-class pair, at
++0.56, confirms the method isn't spurious). Crypto shows no significant *positive*
+co-occurrence with any traditional market in either run, and now two significant *negative*
+pairs — if anything this strengthens rather than weakens the segmentation reading: crypto's
+atypical days do not coincide with, and in two pairings tend to anti-coincide with, traditional
+markets' atypical days. This reads as evidence of market segmentation: the shared macro-shock
+structure linking equities and commodities does not (at least in this data) extend to crypto,
+relevant to the ongoing debate over whether crypto is integrated with traditional macro risk or
+a separate ecosystem.
 
 **Known limitation, reported honestly:** the Bitcoin-vs-Ethereum comparison found 0 overlapping
 dates — a data-handling artifact (likely a timezone/index-alignment mismatch between separate
@@ -1147,10 +1155,18 @@ The self-inclusive and strictly-causal scores were correlated at 0.99-1.00 acros
 and the corrected, strictly-causal version is, if anything, slightly **stronger** on every row
 checked — the opposite of what an inflationary leakage artifact would look like. The issue was
 real and worth finding, but it was conservative, not inflationary; it has now been fixed in both
-source files for correctness going forward. A full 7-asset re-run with the corrected code was
-not repeated for every downstream finding that touches these columns (33, 35, 36, 44) given the
-spot-check's consistency, but should be treated as a known, low-priority to-do before any final
-reporting of those specific numbers.
+source files for correctness going forward.
+
+**Update: the full 7-asset re-run is done.** Every downstream finding that touches the fixed
+columns (33, 35, 36) has now been re-run end to end with the corrected code and the tables
+above reflect the new numbers directly, rather than the original spot-check standing in for
+them. (Finding 44 did not need a re-run: `garch_baseline_comparison.py` never used the
+self-inclusive classical-detector columns in the first place — it only uses the diffusion
+atypicality score, which was unaffected by this fix.) Net effect across all three: the core
+claims are unchanged, Gold is now included everywhere it was previously missing due to a data
+outage, and one pairwise detail in finding 36 (two crypto-vs-traditional pairs moved from
+not-significant to significant-negative) changed and is reported as such above rather than
+re-asserted as identical.
 
 **A separate, non-code methodological note worth stating explicitly:** `statistical_rigor.py`'s
 `permutation_test` reports a **one-sided** p-value (`(null_gaps >= observed).mean()`), consistent
