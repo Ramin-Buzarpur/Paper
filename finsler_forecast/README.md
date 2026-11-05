@@ -606,6 +606,40 @@ diffusion/
   forecast.py                 DiffusionScenarioForecaster: checkpoint -> price forecast
 ```
 
+## Independent track: a standalone diffusion-based analog model (no longer tied to the colleague's engine)
+
+Starting from finding 18, this investigation forked into a separate, standalone model: delay
+embedding + plain-Euclidean (or diffusion-learned) analog selection + diffusion-based
+confidence gating, which does not call `FinslerRandersGeodesicEngine` and is evaluated as a
+model in its own right rather than a complement to the colleague's method (see the finding-27
+caveat above for why that distinction matters).
+
+**Finding 28 — refining the diffusion-anomaly gate (finding 26) with a lower-variance ELBO
+estimator and a 5-asset test reveals a real, generalizable pattern, with Brent as a genuine
+exception.** `diffusion_v2_improvements.py` tests three refinements: (A) a deterministic
+full-ELBO atypicality score (average denoising loss over all 50 timesteps, not a 32-sample
+Monte Carlo subset — lower variance); (B) a Diffusion-Time-Estimation-style score (the *minimum*
+per-timestep loss, a different summary of the same posterior, from the diffusion anomaly-
+detection literature); (C) stacking diffusion-metric analog selection (finding 18) with the
+ELBO gate. Tested on five assets (Brent, S&P 500, Bitcoin, Ethereum, Gold), CPCV-confirmed:
+
+| asset | (A) full ELBO gate (low/high) | (C) metric-selection + ELBO gate (low/high) |
+|---|---|---|
+| Brent | 80.0% / 70.8% — **reversed** | 67.9% / 55.0% — **reversed** |
+| S&P 500 | 61.3% / 71.4% | 70.0% / 71.4% (flat) |
+| Bitcoin | 61.3% / 75.0% | 68.3% / **83.3%** |
+| Ethereum | 57.1% / 71.4% | 56.3% / **80.0%** |
+| Gold | 57.1% / 66.7% | 59.2% / **75.0%** |
+
+Method (B), the DTE-style score, was weak and flat on every asset and wasn't pursued further.
+The combination in (C) is strong and consistent on Bitcoin, Ethereum, and Gold, flat on S&P
+500, and reverses specifically on Brent — meaning finding 26's original 83.3% Brent number
+(from the noisier 32-sample estimator) was likely partly a noise artifact, not a robust effect.
+The honest, refined claim: this combination generalizes well to crypto and precious-metal
+markets but not to Brent crude, plausibly because Brent's price action is more often driven by
+discrete geopolitical/supply shocks than by the kind of continuous statistical structure a
+diffusion model trained purely on price history can learn.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
