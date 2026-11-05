@@ -946,6 +946,29 @@ like a systemic-risk early-warning signal, in the spirit of (though far simpler 
 ECB's CISS index — directly relevant to the systemic-risk and financial-stress-indicator
 literature in economics, independent of the trading-performance questions raised earlier.
 
+**Finding 39 — Granger causality upgrades finding 36's co-occurrence claim to a directed
+lead-lag structure, and independently corroborates crypto's segmentation.**
+`granger_and_fresh_crisis.py` tests Granger causality (lags 1-3) among all pairs of the 7
+assets' causal atypicality-rank series. Traditional markets show rich, directed structure:
+S&P 500 → Silver/WTI Crude/Gold all significant at p<0.0001 (equities appear to *lead*
+commodity atypicality, not just co-occur with it), and Brent↔WTI, Brent↔S&P 500 bidirectional
+and strong. Bitcoin and Ethereum show no significant Granger relationship (p>0.04, mostly far
+higher) with any other asset in either direction — a second, independent method (directional,
+not just correlational) confirming finding 36's claim that crypto's atypicality is segmented
+from the traditional-market macro-shock structure.
+
+**Finding 40 — a fresh, never-touched crisis (March 2023 banking stress) tests the systemic-
+risk framing prospectively, and reveals a real, honestly-reported limitation.** The composite
+index (finding 38) rose only +3.0pp over baseline during the March 2023 US regional banking
+stress (SVB/Signature/First Republic) — far weaker than the +36.6pp (2008) and +29.8pp (2020)
+responses. This is a genuine limitation, not a universal early-warning claim: SVB was a narrow,
+sector-specific shock (US regional banks), and this investigation's asset panel (broad equity
+index, energy, metals, crypto) has no instrument directly exposed to that sector, so the
+composite understandably stayed close to baseline. The indicator responds to shocks broad
+enough to move its own panel's constituent assets, not to every systemically important event —
+an important scope boundary to state explicitly rather than let the strong 2008/2020 results
+imply more generality than the evidence supports.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
