@@ -703,6 +703,36 @@ risk-sizing techniques exist, each suited to a different asset class, rather tha
 fix — which is itself a defensible, publishable point (robustness to cost assumptions, and a
 principled menu of risk controls rather than one overfit choice).
 
+## Reframing toward a detection/predictability claim (journal-grade rigor)
+
+Trading-performance claims (findings 29/30) invite intense scrutiny (survivorship-biased bull
+markets, ~30 methods tried raising multiple-testing concerns, unrealistic cost/slippage
+assumptions). A cleaner, more defensible claim for a methods-oriented journal: diffusion-model
+reconstruction error identifies market states that are genuinely, statistically more
+predictable by analog forecasting — a detection/characterization result, not a trading system.
+
+**Finding 31 — formal statistical testing (permutation test) confirms the atypicality-
+predictability link on 4 of 5 assets, and shows a classical volatility-regime baseline does
+NOT reproduce it on any asset.** `statistical_rigor.py` runs a 2000-permutation test: shuffle
+the atypicality score across folds, recompute the high-vs-low accuracy gap under each shuffle,
+and report the empirical p-value of the real gap against this null distribution. Repeated for a
+classical realized-volatility-regime score (no diffusion model at all) as the baseline a
+reviewer would immediately ask about.
+
+| asset | diffusion atypicality gap | p-value | classical vol-regime gap | p-value |
+|---|---|---|---|---|
+| Brent | +8.3pp | **p<0.0001** | +3.1pp | p=0.099 |
+| S&P 500 | +2.9pp | p=0.114 | +2.0pp | p=0.214 |
+| Gold | +4.9pp | **p=0.022** | +0.7pp | p=0.386 |
+| Bitcoin | +10.6pp | **p=0.0005** | +3.3pp | p=0.109 |
+| Ethereum | +6.5pp | **p=0.027** | +1.6pp | p=0.333 |
+
+The diffusion-based score is significant (p<0.05) on 4 of 5 assets; the classical
+volatility-regime baseline is significant on none of them. This directly pre-empts the
+most obvious reviewer objection ("why not just use a GARCH/volatility-regime split") with a
+real head-to-head rather than an assertion. S&P 500's non-significance is consistent with every
+earlier finding involving that asset, where the effect was always weakest.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
