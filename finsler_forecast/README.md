@@ -733,6 +733,13 @@ most obvious reviewer objection ("why not just use a GARCH/volatility-regime spl
 real head-to-head rather than an assertion. S&P 500's non-significance is consistent with every
 earlier finding involving that asset, where the effect was always weakest.
 
+**⚠️ Superseded by finding 33 below.** This finding only tested ONE weak classical baseline
+(realized-volatility regime). Against three *stronger*, standard anomaly-detection algorithms
+(Isolation Forest, LOF, Mahalanobis-PCA), the diffusion model is matched or beaten on nearly
+every asset — the "diffusion specifically" framing does not survive; read finding 33 before
+citing this one's comparison claim. The permutation-test methodology and the core
+atypicality-predictability finding itself still stand.
+
 **Finding 32 — combined significance (Fisher's method), two more assets, and an inconclusive
 look at why S&P 500 is the outlier.** `meta_analysis_extended_panel.py` extends finding 31
 three ways:
@@ -760,6 +767,52 @@ simple proxy does not explain the S&P 500 gap. The likely real explanation — t
 the most intensely arbitraged, informationally efficient instrument in the panel — remains a
 plausible hypothesis, not a demonstrated finding; honestly reported as unresolved rather than
 forcing a tidy explanation the data doesn't support.
+
+**Finding 33 — the most important correction in this investigation: the effect is real, but
+it isn't specific to diffusion models, and it only partly survives a genuine held-out test.**
+`robustness_journal_grade.py` runs two tests that directly target publication-readiness.
+
+**(A) Classical anomaly-detector comparison.** The diffusion ELBO score vs. three standard,
+well-established anomaly detectors (Isolation Forest, Local Outlier Factor, Mahalanobis
+distance in PCA space), all fit causally on the same 3D embedding:
+
+| asset | diffusion | Isolation Forest | LOF | Mahalanobis-PCA |
+|---|---|---|---|---|
+| Brent | 8.3pp | 11.7pp | 13.3pp | 13.0pp |
+| S&P 500 | 2.9pp (not significant) | significant | significant | significant |
+| Bitcoin | 10.6pp | 13.2pp | 11.7pp | 12.5pp |
+| Ethereum | 6.5pp | 13.8pp | 9.8pp | 13.8pp |
+| Silver | 10.9pp | 13.5pp | 12.4pp | 13.8pp |
+| WTI Crude | 10.2pp | 9.1pp | 10.0pp | 9.4pp |
+
+(Gold is missing — a Yahoo Finance data outage for GC=F during this run, not a result.) The
+classical detectors matched or beat the diffusion model on nearly every asset, and all three
+reached significance on S&P 500 where diffusion did not. **This means findings 18, 22, 23, and
+31's "diffusion specifically" framing was premature** — the real, robust discovery is that
+*any reasonable novelty/anomaly detector* on this delay-embedded return space finds the same
+atypicality-predictability link. That is a more honest and, arguably, a more publishable claim:
+a market stylized fact (novelty-conditional predictability), not a "our model beats theirs"
+claim tied to one architecture.
+
+**(B) A genuine, single-shot held-out test.** The last 20% of each asset's history was never
+touched by any model selection, tuning, or exploratory check anywhere in this investigation.
+Evaluated exactly once:
+
+| asset | held-out p-value |
+|---|---|
+| Brent | **p=0.0005** |
+| Silver | **p=0.0065** |
+| WTI Crude | **p=0.0080** |
+| S&P 500, Bitcoin, Ethereum | not significant individually |
+
+Fisher's combined p-value across all 6 assets with available held-out data: **p=0.000024** —
+the phenomenon survives at the panel level on genuinely new data. But only half the assets
+(3 of 6) are individually significant in this single confirmatory test, despite most being
+significant (or close) on the fuller exploratory sample. Report both facts: the effect is not
+a pure artifact of exploratory multiple-testing (the panel-level result replicates
+out-of-sample), but it is also not uniformly strong enough to claim individually for every
+asset on fresh data — Bitcoin and Ethereum in particular should be described as suggestive,
+not confirmed, going forward.
 
 ## Final summary across all 27 methods tested
 
