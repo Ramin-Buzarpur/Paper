@@ -814,6 +814,45 @@ out-of-sample), but it is also not uniformly strong enough to claim individually
 asset on fresh data — Bitcoin and Ethereum in particular should be described as suggestive,
 not confirmed, going forward.
 
+## Positioning for publication: a bridge between two literatures
+
+The colleague's core method (delay-embed returns, find the K nearest historical states,
+average their true continuations) is structurally identical to the **Analog Ensemble (AnEn)**
+framework from atmospheric and space-weather forecasting (Delle Monache et al. 2011) — a
+three-step technique (find analogs, read their verifying observations, pool them into an
+ensemble) with an established formal literature, but one that, per a literature search for
+this investigation, has not been formally applied to financial markets under that name;
+finance's k-NN forecasting literature is related but distinct and informal by comparison.
+Separately, finance has an extensive literature on *regime-dependent return predictability*
+(bull/bear states, Markov-switching, high/low-volatility regimes) but none of it, per the same
+search, uses novelty/anomaly detection as the regime signal. This investigation sits at the
+intersection: an AnEn-style forecaster, gated by a novelty/anomaly score, tested against the
+regime-dependent-predictability literature's own natural baseline (bull/bear state).
+
+**Finding 34 — the atypicality signal is mostly independent of classical bull/bear regime, and
+its regime-concentration differs by asset rather than following one universal pattern.**
+`anen_bullbear_distinctness.py` tests whether the atypicality signal (whichever detector
+computes it) is just a relabeled bull/bear indicator (price vs. 200-day moving average) by
+(a) correlating the two, and (b) checking whether the predictability gap holds separately
+within bull-only and bear-only sub-periods.
+
+| asset | corr(atypicality, bull) | bull-only gap (p) | bear-only gap (p) |
+|---|---|---|---|
+| Brent | -0.126 | +1.8pp (p=0.322) | **+13.1pp (p<0.0001)** |
+| S&P 500 | -0.456 (moderate) | +5.7pp (p=0.019) | -7.1pp (p=0.936, reversed) |
+| Bitcoin | +0.008 | **+16.8pp (p<0.0001)** | +6.2pp (p=0.083) |
+| Ethereum | +0.033 | +8.0pp (p=0.027) | +7.4pp (p=0.053) |
+| Silver | -0.010 | **+14.1pp (p<0.0001)** | +6.9pp (p=0.033) |
+| WTI Crude | -0.136 | +6.1pp (p=0.022) | **+12.7pp (p<0.0001)** |
+
+5 of 6 assets show low correlation (<0.15 in magnitude) between atypicality and bull/bear
+state — evidence this is a genuinely different dimension, not a relabeling. The effect
+concentrates in bear markets for the two oil assets, in bull markets for Bitcoin, and in both
+regimes for Silver and Ethereum — no single universal pattern, which argues against the
+signal being a disguised version of one already-known regime indicator. S&P 500 remains the
+exception (moderate correlation, effect reverses in bear markets), consistent with every prior
+finding where it behaves differently from the rest of the panel.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
