@@ -92,28 +92,33 @@ def causal_rank_series(ticker, max_years, retrain_every=30, epochs=30):
     return pd.Series(rank, index=pd.DatetimeIndex(dates)).dropna()
 
 
-print("Computing causal atypicality-rank series per asset...")
-series = {}
-for ticker, name in ASSETS:
-    t0 = time.time()
-    s = causal_rank_series(ticker, max_years=20 if name not in ("Bitcoin", "Ethereum") else (10 if name == "Bitcoin" else 8))
-    if s is None:
-        print(f"  {name}: skipped")
-        continue
-    series[name] = s
-    print(f"  {name}: {len(s)} points ({time.time()-t0:.0f}s)")
-    time.sleep(2)
+def main():
+    print("Computing causal atypicality-rank series per asset...")
+    series = {}
+    for ticker, name in ASSETS:
+        t0 = time.time()
+        s = causal_rank_series(ticker, max_years=20 if name not in ("Bitcoin", "Ethereum") else (10 if name == "Bitcoin" else 8))
+        if s is None:
+            print(f"  {name}: skipped")
+            continue
+        series[name] = s
+        print(f"  {name}: {len(s)} points ({time.time()-t0:.0f}s)")
+        time.sleep(2)
 
-composite = pd.concat(series, axis=1).mean(axis=1, skipna=True).dropna()
-composite = composite.resample("D").ffill().dropna()
-baseline_mean = composite.mean()
-print(f"\nComposite systemic-atypicality index: {len(composite)} days, baseline mean={baseline_mean:.3f}")
+    composite = pd.concat(series, axis=1).mean(axis=1, skipna=True).dropna()
+    composite = composite.resample("D").ffill().dropna()
+    baseline_mean = composite.mean()
+    print(f"\nComposite systemic-atypicality index: {len(composite)} days, baseline mean={baseline_mean:.3f}")
 
-print("\n=== Composite index level during known crisis windows vs. baseline ===")
-for label, (start, end) in CRISIS_WINDOWS.items():
-    window = composite.loc[start:end]
-    if window.empty:
-        print(f"{label:38s}: no data in this window")
-        continue
-    print(f"{label:38s}: mean={window.mean():.3f}  max={window.max():.3f}  "
-          f"(baseline={baseline_mean:.3f}, +{(window.mean()-baseline_mean)*100:.1f}pp over baseline)")
+    print("\n=== Composite index level during known crisis windows vs. baseline ===")
+    for label, (start, end) in CRISIS_WINDOWS.items():
+        window = composite.loc[start:end]
+        if window.empty:
+            print(f"{label:38s}: no data in this window")
+            continue
+        print(f"{label:38s}: mean={window.mean():.3f}  max={window.max():.3f}  "
+              f"(baseline={baseline_mean:.3f}, +{(window.mean()-baseline_mean)*100:.1f}pp over baseline)")
+
+
+if __name__ == "__main__":
+    main()
