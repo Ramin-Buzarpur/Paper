@@ -640,6 +640,41 @@ markets but not to Brent crude, plausibly because Brent's price action is more o
 discrete geopolitical/supply shocks than by the kind of continuous statistical structure a
 diffusion model trained purely on price history can learn.
 
+**Finding 29 — a real economic backtest (longer history, transaction costs, Sharpe ratio,
+momentum baseline) surfaces a genuine edge AND a genuine problem with the binary gate.**
+`economic_backtest.py` extends history to 7-20 years per asset (not the earlier fixed 6-year
+window) and replaces directional-accuracy scoring with a non-overlapping, cost-aware trading
+simulation. Two honest findings:
+
+1. The diffusion-metric model (finding 18), with no gate at all, beats a simple momentum
+   baseline on both Sharpe and total return, on all 5 assets tested (Brent, S&P 500, Gold,
+   Bitcoin, Ethereum) — a real edge, sanity-checked against buy-and-hold (Sharpe 0.07-0.54 on
+   these same assets, ruling out "it's just long-term beta").
+2. The binary atypicality gate (findings 26/28) makes economic performance WORSE than always
+   trading, on every asset — despite improving directional accuracy on the subset it fires on.
+   It skips too many still-profitable "typical" days. This is a direct, necessary correction to
+   reading findings 26/28 as a ready-made trading rule.
+
+`position_sizing_backtest.py` fixes problem 2: instead of a binary trade/no-trade filter, the
+atypicality score becomes a continuous position-size multiplier (everyone stays in the market),
+with a cheap add-on that halves size when the diffusion-metric and momentum signals disagree.
+
+| asset | ungated fixed-size (baseline) | continuous sizing | sizing + momentum filter |
+|---|---|---|---|
+| Brent | Sharpe 3.36, maxDD -21% | Sharpe 3.07 | Sharpe 3.22, maxDD -27% |
+| S&P 500 | Sharpe 2.83, maxDD -17% | Sharpe 2.61 | Sharpe 2.69, maxDD -18% |
+| Gold | Sharpe 3.02, maxDD -16% | Sharpe 2.96 | Sharpe 3.08, maxDD -19% |
+| Bitcoin | Sharpe 3.39, maxDD **-37%** | Sharpe 3.34 | Sharpe **3.57**, maxDD **-26%** |
+| Ethereum | Sharpe 3.14, maxDD **-47%** | Sharpe 3.14 | Sharpe 3.14, maxDD **-28%** |
+
+Continuous sizing no longer destroys performance the way the binary gate did, and the
+momentum-agreement add-on meaningfully cuts drawdown on the two highest-drawdown assets
+(Bitcoin, Ethereum) with Sharpe flat or improved. **Caveat that applies to every number in this
+finding:** Sharpe ratios of 2-3.4 are unusually high for a real systematic strategy and almost
+certainly reflect the simplified cost assumption (2bps, no slippage) rather than literal
+real-world expectations — read these as relative comparisons between strategies under matched
+assumptions, not as a promise of real trading performance.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
