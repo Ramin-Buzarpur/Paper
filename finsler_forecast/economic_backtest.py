@@ -1,5 +1,5 @@
 """
-Addresses three of the four weaknesses flagged for publishability:
+Addresses three of the four weaknesses flagged as needing more rigor:
 1. Longer history (up to the max yfinance offers per asset, not a fixed 6 years).
 2. A real economic backtest: non-overlapping 3-day holding periods, per-trade transaction
    cost, cumulative return, annualized Sharpe ratio, max drawdown -- not just directional

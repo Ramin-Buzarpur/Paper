@@ -336,7 +336,7 @@ def main():
         "deciding *when* to trust the existing karcher forecast (gates), or changing *what counts "
         "as similar* when picking historical analogs (learned metrics). The diffusion-"
         "reconstruction-error gate (finding 26) is the strongest and most universal result, and "
-        "the most publishable: it is also the most counter-intuitive, confirmed with rigorous "
+        "the most compelling: it is also the most counter-intuitive, confirmed with rigorous "
         "cross-validation on three independent assets."
     )
 

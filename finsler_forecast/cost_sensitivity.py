@@ -6,7 +6,7 @@ Result (see README Finding 30): the strategy is robust to cost. Even at 50bps (2
 assumption, already conservative for liquid futures/equities and plausible for crypto), Sharpe
 drops only modestly: Brent 3.22->2.89, S&P 500 2.69->1.96, Gold 3.08->2.23, Bitcoin 3.57->3.27,
 Ethereum 3.14->2.90. The 3-day holding period means turnover is low enough that cost assumptions
-don't drive the headline result -- this removes one of the easiest objections a reviewer could
+don't drive the headline result -- this removes one of the easiest objections a skeptic could
 raise.
 """
 import sys, os, time

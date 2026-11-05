@@ -397,8 +397,8 @@ changed *when* to trust the existing forecast or *which* historical days count a
 3. **Causal denoising of the embedding** (#13) — Bitcoin only.
 4. **Volume-surprise gate** (#14) — **all three assets**, the only universal result found.
 
-If this becomes a paper, finding 14 is the headline result; findings 6, 8 and 13 are the
-asset-specific appendix; findings 1-5, 7, 9-12, 15-17 are the (honestly reported) negative
+Finding 14 is the headline result of this batch; findings 6, 8 and 13 are the
+asset-specific extras; findings 1-5, 7, 9-12, 15-17 are the (honestly reported) negative
 space that makes the positive results credible rather than cherry-picked.
 
 **Finding 18 — a diffusion-score-based similarity metric for analog selection robustly fixes
@@ -700,24 +700,24 @@ wins everywhere.
 
 A richer, more honest conclusion than a single winning method: several complementary
 risk-sizing techniques exist, each suited to a different asset class, rather than one universal
-fix — which is itself a defensible, publishable point (robustness to cost assumptions, and a
-principled menu of risk controls rather than one overfit choice).
+fix — which is itself a meaningful result in its own right (robustness to cost assumptions, and
+a principled menu of risk controls rather than one overfit choice).
 
-## Reframing toward a detection/predictability claim (journal-grade rigor)
+## Reframing toward a detection/predictability claim (statistical rigor)
 
 Trading-performance claims (findings 29/30) invite intense scrutiny (survivorship-biased bull
 markets, ~30 methods tried raising multiple-testing concerns, unrealistic cost/slippage
-assumptions). A cleaner, more defensible claim for a methods-oriented journal: diffusion-model
-reconstruction error identifies market states that are genuinely, statistically more
-predictable by analog forecasting — a detection/characterization result, not a trading system.
+assumptions). A cleaner, more defensible claim: diffusion-model reconstruction error identifies
+market states that are genuinely, statistically more predictable by analog forecasting — a
+detection/characterization result, not a trading system.
 
 **Finding 31 — formal statistical testing (permutation test) confirms the atypicality-
 predictability link on 4 of 5 assets, and shows a classical volatility-regime baseline does
 NOT reproduce it on any asset.** `statistical_rigor.py` runs a 2000-permutation test: shuffle
 the atypicality score across folds, recompute the high-vs-low accuracy gap under each shuffle,
 and report the empirical p-value of the real gap against this null distribution. Repeated for a
-classical realized-volatility-regime score (no diffusion model at all) as the baseline a
-reviewer would immediately ask about.
+classical realized-volatility-regime score (no diffusion model at all) as the most obvious
+baseline to rule out.
 
 | asset | diffusion atypicality gap | p-value | classical vol-regime gap | p-value |
 |---|---|---|---|---|
@@ -729,7 +729,7 @@ reviewer would immediately ask about.
 
 The diffusion-based score is significant (p<0.05) on 4 of 5 assets; the classical
 volatility-regime baseline is significant on none of them. This directly pre-empts the
-most obvious reviewer objection ("why not just use a GARCH/volatility-regime split") with a
+most obvious objection ("why not just use a GARCH/volatility-regime split") with a
 real head-to-head rather than an assertion. S&P 500's non-significance is consistent with every
 earlier finding involving that asset, where the effect was always weakest.
 
@@ -790,7 +790,7 @@ classical detectors matched or beat the diffusion model on nearly every asset, a
 reached significance on S&P 500 where diffusion did not. **This means findings 18, 22, 23, and
 31's "diffusion specifically" framing was premature** — the real, robust discovery is that
 *any reasonable novelty/anomaly detector* on this delay-embedded return space finds the same
-atypicality-predictability link. That is a more honest and, arguably, a more publishable claim:
+atypicality-predictability link. That is a more honest and, arguably, a more compelling claim:
 a market stylized fact (novelty-conditional predictability), not a "our model beats theirs"
 claim tied to one architecture.
 
@@ -1036,8 +1036,8 @@ atypical-regime subset, reinforcing finding 41's dynamical account rather than s
 small uniform edge spread evenly across all days.
 
 **Finding 43 — the analog model also beats a classical econometric baseline (AR(1)), not just
-the random-walk naive.** `arima_baseline_comparison.py` adds the benchmark a forecasting-journal
-reviewer asks for first: a causal AR(1) model (statsmodels `ARIMA(1,0,0)`, periodically refit on
+the random-walk naive.** `arima_baseline_comparison.py` adds the most obvious next benchmark:
+a causal AR(1) model (statsmodels `ARIMA(1,0,0)`, periodically refit on
 the same causal history), forecasting the cumulative H-step return, evaluated with the same
 MASE metric as finding 42. (Bitcoin failed to collect in this run due to a transient Yahoo
 Finance data outage — the same kind of flakiness noted for Gold in finding 33 — not a result;
@@ -1061,8 +1061,8 @@ econometric competitor, evaluated on the identical folds, does not.
 
 **Finding 44 — the analog model also beats GARCH(1,1), and the atypicality detector is only
 moderately correlated with GARCH conditional volatility — it is not just rediscovering
-volatility clustering.** `garch_baseline_comparison.py` adds the second classical benchmark a
-reviewer expects after AR(1) (finding 43): a causal, periodically-refit GARCH(1,1)
+volatility clustering.** `garch_baseline_comparison.py` adds the second classical benchmark
+that naturally follows AR(1) (finding 43): a causal, periodically-refit GARCH(1,1)
 (constant-mean, `arch` package) forecasting the cumulative H-step return, plus a direct check
 of whether the diffusion atypicality score (finding 31) is just a proxy for GARCH's conditional
 volatility forecast.
@@ -1085,8 +1085,8 @@ strength) is well-specified. The atypicality-vs-GARCH-volatility correlation is 
 non-trivial (mean +0.36 across assets, confirming atypical days do tend to be higher-volatility
 days) but far from 1 — meaning the detector is not simply relabeling GARCH's own volatility
 forecast. This is an important, honestly-reported boundary: the effect is *related to* but not
-*reducible to* volatility clustering, which answers the natural reviewer objection directly
-rather than leaving it unaddressed.
+*reducible to* volatility clustering, which answers the natural objection directly rather than
+leaving it unaddressed.
 
 ## Final summary across all 27 methods tested
 

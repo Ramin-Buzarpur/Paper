@@ -1,6 +1,6 @@
 """
 Every finding so far reports BINARY directional accuracy (predicted up/down vs. actual
-up/down). Forecasting journals (IJF explicitly) expect continuous forecast-error metrics
+up/down). Standard forecasting practice calls for continuous forecast-error metrics
 (MASE, RMSE) benchmarked against a naive forecast -- directional accuracy alone invites the
 objection "a coin flip has 50% accuracy too; how much of the RETURN did you actually get
 right, and against what baseline?"

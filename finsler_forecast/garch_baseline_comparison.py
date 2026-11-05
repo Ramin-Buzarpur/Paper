@@ -1,5 +1,5 @@
 """
-Two things a forecasting-journal reviewer will ask after seeing finding 43 (AR(1) baseline):
+Two natural follow-up questions after finding 43 (AR(1) baseline):
 A) How does the analog model compare to GARCH(1,1), the standard volatility-clustering model,
    not just a mean-return model like AR(1)?
 B) Is the "atypicality" detector (finding 31/33/41) actually just re-discovering GARCH

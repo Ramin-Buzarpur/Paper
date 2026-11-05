@@ -29,12 +29,12 @@ diffusion model is matched or beaten everywhere, and on S&P 500 specifically, al
 classical detectors reach significance where diffusion did not. (Gold is missing from this run
 -- a Yahoo Finance data outage for GC=F during collection, not a result.)
 
-This changes the paper's central claim. It is no longer "a diffusion model detects atypical,
+This changes the central claim. It is no longer "a diffusion model detects atypical,
 more-predictable market states" -- it is "ANY reasonable novelty/anomaly detector on this
 delay-embedded return space detects atypical, more-predictable market states." The phenomenon
 is real and robust; the specific detector (diffusion vs. Isolation Forest vs. LOF vs.
 Mahalanobis) is not the contribution. If anything this is a cleaner, more Occam's-razor-honest
-story for a paper: a market stylized-fact claim, not a "my fancy model is best" claim.
+framing: a market stylized-fact claim, not a "my fancy model is best" claim.
 
 (B) True held-out test (last 20%, touched once): the overall phenomenon survives --
 Fisher-combined p=0.000024 across the 6 assets with data available -- but only 3 of 6

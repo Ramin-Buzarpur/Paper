@@ -1,14 +1,13 @@
 """
-Two additions aimed at journal-grade rigor for the "atypical days are more predictable" claim
-(findings 26/28), reframing away from trading/Sharpe toward the detection/predictability claim
-the user wants to lead with:
+Two additions aimed at statistical rigor for the "atypical days are more predictable" claim
+(findings 26/28), reframing away from trading/Sharpe toward the detection/predictability claim:
 
 A) Permutation test: is the observed accuracy gap (high-atypicality bucket vs. low) bigger than
    what random bucket-shuffling would produce? 2000 permutations, empirical p-value.
 B) Classical-baseline comparison: does a simple realized-volatility-regime classifier (no
    diffusion model at all) reproduce the same gap? If a GARCH-style volatility regime does
    just as well, the diffusion model adds nothing beyond what a classical method already gives
-   -- this is the first objection a reviewer would raise, so it must be answered head-on.
+   -- this is the first, most obvious objection, so it must be answered head-on.
 
 Result (see README Finding 31): a clean head-to-head in the diffusion model's favor.
 

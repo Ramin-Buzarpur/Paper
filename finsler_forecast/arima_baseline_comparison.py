@@ -1,8 +1,8 @@
 """
 Every comparison so far benchmarks the analog-forecast model against the random-walk naive
 (finding 42) or against other anomaly detectors (finding 33) -- never against an established
-classical FORECASTING model. A forecasting-journal reviewer's first question is "how does this
-compare to a standard econometric baseline (AR/ARIMA), not just a no-change forecast?"
+classical FORECASTING model. The obvious next question is "how does this compare to a
+standard econometric baseline (AR/ARIMA), not just a no-change forecast?"
 
 Method: for every fold already used in continuous_error_metrics.py, additionally fit a causal
 AR(1) model (statsmodels ARIMA(1,0,0), refit every `retrain_every` folds on history up to the
