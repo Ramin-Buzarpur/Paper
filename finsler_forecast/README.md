@@ -1008,6 +1008,33 @@ predictability mechanism argued for in the forecasting literature (e.g. the
 but grounded here in an explicit, computable, control-theoretic quantity rather than a
 qualitative market-regime label.
 
+**Finding 42 — the effect holds under a continuous, forecasting-journal-standard error metric
+(MASE against a random-walk benchmark), not just binary directional accuracy.**
+`continuous_error_metrics.py` re-evaluates the same causal forecasts kept continuous (predicted
+and actual H-day log returns, not just their signs) and computes Mean Absolute Scaled Error
+(Hyndman & Koehler, 2006 — the standard forecast-accuracy metric in the forecasting literature,
+scale-free and comparable across assets) against the canonical no-change / random-walk naive
+forecast, plus RMSE:
+
+| asset | RMSE model | RMSE naive | MASE overall | MASE atypical | MASE typical |
+|---|---|---|---|---|---|
+| Brent | 0.0377 | 0.0433 | 0.885 | **0.839** | 0.967 |
+| S&P 500 | 0.0172 | 0.0189 | 0.912 | **0.879** | 0.976 |
+| Gold | 0.0175 | 0.0203 | 0.887 | **0.829** | 0.976 |
+| Bitcoin | 0.0521 | 0.0595 | 0.892 | **0.826** | 1.001 |
+| Ethereum | 0.0613 | 0.0700 | 0.911 | **0.826** | 1.036 |
+| Silver | 0.0338 | 0.0375 | 0.896 | **0.820** | 1.014 |
+| WTI Crude | 0.0414 | 0.0474 | 0.880 | **0.825** | 0.980 |
+
+**7 of 7 assets beat the random-walk naive overall (MASE < 1)**, and **7 of 7 show a lower
+(better) MASE on atypical days than on typical days** — the continuous-error result agrees with
+every earlier binary-accuracy finding, so the phenomenon is not an artifact of thresholding
+continuous returns into up/down labels. Notably, on *typical* days alone the model is
+frequently at or slightly worse than the naive random walk (Bitcoin 1.001, Ethereum 1.036,
+Silver 1.014) — the entire edge over the random-walk benchmark is concentrated in the
+atypical-regime subset, reinforcing finding 41's dynamical account rather than suggesting a
+small uniform edge spread evenly across all days.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
