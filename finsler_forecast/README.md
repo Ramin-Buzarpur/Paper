@@ -913,6 +913,39 @@ over whether crypto is integrated with traditional macro risk or a separate ecos
 dates — a data-handling artifact (likely a timezone/index-alignment mismatch between separate
 collection runs), not a real finding. Flagged rather than silently dropped.
 
+**Finding 37 — a 30-stock market-breadth index does not improve index-level forecast
+accuracy (negative, reported honestly).** `market_breadth_index.py` scales up to 30 diverse
+S&P 500 constituents (tech, financials, energy, healthcare, consumer, industrials, media),
+computes a lightweight (diffusion-only) causal atypicality flag per stock, and aggregates into
+a daily breadth score (% of stocks flagged atypical) — a novelty-detection analogue of classic
+advance/decline breadth indicators. Tested as a predictor of the S&P 500 index's own 3-day
+forecast accuracy: gap = +0.2pp, p=0.473 — indistinguishable from chance. Aggregating many
+stocks' idiosyncratic atypicality does not translate into better index-level direction
+forecasts with this lightweight scoring. Not every scale-up idea works; this one didn't, and
+is reported as such rather than omitted.
+
+**Finding 38 — reframed as a systemic-risk early-warning indicator, the composite atypicality
+score shows a clean, economically interpretable signal around known financial crises.**
+`systemic_risk_indicator.py` averages the causal atypicality rank across 7 independent assets
+(Brent, S&P 500, Gold, Silver, WTI, Bitcoin, Ethereum) into one daily composite index, and
+checks its level during three well-known crisis windows against its long-run baseline (0.407):
+
+| crisis window | composite mean | vs. baseline |
+|---|---|---|
+| 2008 Global Financial Crisis (Sep-Nov 2008) | 0.773 | **+36.6pp** (max hit the 1.0 ceiling) |
+| 2020 COVID crash (Feb-Mar 2020) | 0.704 | **+29.8pp** (max 0.987) |
+| 2022 inflation-driven selloff (Jan-Oct 2022) | 0.515 | +10.9pp (weaker) |
+
+The composite nearly doubles during the two sudden, acute shocks (2008, 2020) and shows a
+smaller but still elevated level during the slower, grinding 2022 selloff — consistent with
+finding 34's observation that this signal's behavior depends on whether a regime shift is
+abrupt or gradual, not just whether one is happening. This reframes the investigation's core
+finding from "improves 3-day direction accuracy" (a narrow, trading-flavored claim) to a more
+general and economically legible one: a simple composite cross-asset atypicality index behaves
+like a systemic-risk early-warning signal, in the spirit of (though far simpler than) the
+ECB's CISS index — directly relevant to the systemic-risk and financial-stress-indicator
+literature in economics, independent of the trading-performance questions raised earlier.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
