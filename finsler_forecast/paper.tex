@@ -90,9 +90,9 @@ We document a previously unreported class of index error in delay-embedding-base
 pipelines, under which the embedding's most recent feature is numerically identical to part of
 the forecast target, and we show that it survives methods normally considered strong
 safeguards against overfitting: walk-forward cross-validation, permutation testing, and a
-genuine out-of-sample holdout. We verify this diagnosis at six increasing levels of pipeline
-complexity, from a closed-form algebraic proof to a null-hypothesis control on synthetic data
-with a provably known absence of structure. To be precise about what this buys us: these are
+genuine out-of-sample holdout. We verify this diagnosis through six checks of increasing
+pipeline complexity, ranging from a closed-form algebraic proof to a null-hypothesis control on
+synthetic data with a provably known absence of structure. To be precise about what this buys us: these are
 six checks at different levels of abstraction, not six independent sources of evidence, since
 checks~1 and~3 below are two representations of the same underlying fact. We show that the
 error affected all four structurally different detectors identically, which establishes that
@@ -471,14 +471,15 @@ We set out to validate the claim that market states flagged as locally atypical 
 unsupervised novelty detector are more forecastable than typical states. The claim passed
 every standard validation step used in this literature. It did not survive a null-data
 control, because the apparent effect was, in fact, a one-step index error that gave the
-forecasting model partial access to its own target. We confirm this diagnosis at six
-increasing levels of pipeline complexity and show that the corrected pipeline retains the
+forecasting model partial access to its own target. Section~5's six checks confirm this
+diagnosis, and show that the corrected pipeline retains the
 ability to detect genuine designed-in signal, which rules out the possibility that the
 correction simply broke the method. We offer the diagnostic protocol that exposed the error, a
 null-noise control paired with a surrogate-data test, both standard tools in adjacent
 literatures but, to our knowledge, not yet standard practice in delay-embedding-based financial
 forecasting, as this paper's main contribution.
 
+\newpage
 \section*{Data and Code Availability}
 All code needed to reproduce every result in this paper, including the original (uncorrected)
 pipeline, the fix, and all six verification checks in Section~5, together with a documented
@@ -489,10 +490,11 @@ acceptance. All price data is downloaded at run time from Yahoo Finance and is n
 redistributed.
 
 \section*{CRediT Authorship Contribution Statement}
-\textbf{Ramin Buzarpur}: Conceptualization, Software, Methodology, Formal analysis,
-Investigation, Data curation, Writing -- original draft. \textbf{Armin Buzarpur}:
-Methodology, Formal analysis (dynamical-systems and control-theoretic framing), Validation,
-Writing -- review \& editing.
+\noindent\textbf{Ramin Buzarpur}: Conceptualization, Software, Methodology, Formal analysis,
+Investigation, Data curation, Writing -- original draft.
+
+\noindent\textbf{Armin Buzarpur}: Methodology, Formal analysis (dynamical-systems and
+control-theoretic framing), Validation, Writing -- review \& editing.
 
 \section*{Declaration of Competing Interest}
 The authors declare that they have no known competing financial interests or personal
@@ -508,6 +510,7 @@ proofread drafts and improve language and clarity. The authors conceived the stu
 the analysis, wrote the original text, and reviewed and edited all content before submission,
 and take full responsibility for the content of the publication.
 
+\newpage
 \begin{thebibliography}{99}
 
 \bibitem[Alessandrini et al., 2015]{alessandrini2015} Alessandrini, S., Delle Monache, L., Sperati, S., \& Nissen, J. (2015). A novel application of an analog ensemble for short-term wind power forecasting. \emph{Renewable Energy}, 76, 768--781.
