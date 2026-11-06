@@ -1564,6 +1564,50 @@ finding: an entire family of 4 structurally-different anomaly/novelty detectors,
 the same embedding-index bug, uniformly showed spurious predictability that uniformly
 disappeared once the shared bug was fixed.
 
+**Finding 54 — a systematic, 6-point leakage audit of the fixed pipeline, run after finding
+51, to answer a different and equally important question: six tests proved THAT SPECIFIC bug
+exists and is fixed, but did not by themselves rule out a second, independent issue elsewhere
+in the pipeline.** `leakage_audit_checklist.py` checks, independently, whether: (1) every
+feature at fold j uses only data before its own reference point, post-fix; (2) the embedding's
+normalization is computed causally rather than leaking full-sample statistics; (3) the
+train/test (origin) ordering is strictly temporal with no shuffling anywhere; (4)/(5) `embed()`
+itself, post-fix, never places a same-or-future return into `pc[j]`; (6) the atypicality
+computation doesn't use fold-j's own future beyond what finding 45 already found and fixed.
+
+**Five of six checks pass cleanly:** 0 of 47 tested folds show any post-fix embedding
+violation (checks 1/5); origins are strictly, monotonically increasing with no shuffling
+(check 3); the diffusion-net self-inclusion issue was already found and fixed in finding 45,
+and no further issue was found there (check 6).
+
+**One real, independent issue was found by check 2, honestly disclosed, and then tested rather
+than just flagged:** the embedding's `scale = np.std(log_ret)` normalization constant is
+computed over the ENTIRE series (including, for any given fold, data from its own future) —
+not causally, i.e. not recomputed from only the data available as of that fold. This is a
+genuine deviation from strict walk-forward purity and should not be minimized.
+
+**However, re-running the core test with a corrected, strictly-causal, per-fold-recomputed
+scale shows this makes no material difference to the result:**
+
+| asset | original (global-scale) | causal-scale variant |
+|---|---|---|
+| Brent | gap=+2.4pp, p=0.176 | gap=-0.11pp, p=0.520 |
+| S&P 500 | gap=-1.2pp, p=0.692 | gap=-1.15pp, p=0.686 |
+
+Both variants remain solidly non-significant, with no qualitative change. This is consistent
+with the theoretical expectation stated before running the test: `scale` is a single positive
+scalar applied UNIFORMLY to every fold within a run, so it cannot alter relative
+nearest-neighbor rankings or distance orderings between folds, and it is never applied to the
+raw `prices`/`log_ret` arrays that define the actual forecast target or the AR/GARCH
+baselines — only to the embedding fed to the atypicality detector. The deviation from strict
+causality is real and is corrected in `leakage_audit_checklist.py`'s variant for the record,
+but it does not explain or interact with finding 51's result.
+
+**Conclusion of the audit:** a systematic 6-point leakage check was performed; one additional
+non-causal element was found (full-sample normalization), disclosed, and empirically shown not
+to affect the finding; no other leakage was found. This is the appropriate basis for stating,
+in any write-up, that the pipeline was systematically audited beyond the single bug that
+motivated the audit — not merely that one bug was found and fixed without further checking.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
