@@ -29,7 +29,7 @@ We document spurious predictability in delay-embedding-based financial forecasti
 to its root cause. Testing four anomaly detectors across seven asset classes, we found forecast
 accuracy substantially higher on days flagged as locally atypical, a result that survived
 walk-forward cross-validation, permutation testing, and an out-of-sample holdout. The effect was
-an artifact of a one-step index error: the embedding's most recent component was numerically
+an artifact of a one-step index error: the embedding's most recent raw return was numerically
 identical to the first step of the future return being predicted. We show analytically why this
 leak concentrates on atypical-flagged days, turning a small index error into a large,
 regime-specific illusion of predictability, and confirm the diagnosis algebraically, with a null
@@ -577,8 +577,10 @@ code repository (see the Data and Code Availability statement).
 $x_j^{(0)}$ (the embedding's raw, pre-scaling component defined above) equals
 $\texttt{log\_ret}[p]$ exactly, not approximately, on a tiny synthetic price array.
 \item \textbf{Generalization across the real series.} Using the project's own code, we
-repeated the algebraic check over 33 origins spread across real Brent history: the overlap
-held universally under the old formula and never under the corrected one.
+repeated the algebraic check on a spot-check sample of 33 origins spread across real Brent
+history (a convenience sample for this specific check, not the full origin set used elsewhere in
+the paper, which numbers in the thousands): the overlap held universally under the old formula
+and never under the corrected one.
 \item \textbf{A pipeline-free, model-free direct test.} The sign of $x_j^{(0)}$ matched the
 sign of the actual future return in 68.3\% of origins under the old convention, against
 50.1\%, consistent with chance, under the fix. That 68.3\% rather than roughly 100\% is itself
@@ -587,13 +589,15 @@ up the target.
 \item \textbf{A null control repeated across ten independent draws} of synthetic i.i.d.\ Gaussian
 white noise, matched to Brent's and S\&P 500's sample length and return volatility (three draws
 at Brent's parameters, seven more at S\&P 500's, with different random seeds; no real price data
-is used in this check). Under the fixed pipeline, the mean permutation
+is used in this check), scored with the diffusion-ELBO detector. Under the fixed pipeline, the mean permutation
 $p$-value across all ten draws was 0.496, consistent with the theoretical expectation of 0.5
 under a true null; one of the ten crossed the nominal 5\% significance threshold ($p=0.037$),
 which is itself unremarkable at that sample size.
 \item \textbf{A fully independent, from-scratch script} with no imports from the project's own
 codebase, using a fresh data download and hand-written embedding and index arithmetic,
-repeated the same algebraic check over 47 origins: again, universal overlap under the old
+repeated the same algebraic check over an independently chosen sample of 47 origins (not matched
+to check~2's 33, since the point of this check is that the two scripts share no code, not that
+they share a sample size): again, universal overlap under the old
 formula and none under the fix. Agreement between this standalone script and check~2 rules out
 a shared misreading of the code baked into the investigation's own tooling.
 \item \textbf{A power test with a known, designed-in signal.} We built a synthetic series with
