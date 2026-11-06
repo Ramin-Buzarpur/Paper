@@ -1189,6 +1189,51 @@ collected successfully against AR(1) on this re-run, closing the one asset gap n
 original finding 43.) The updated tables and numbers are reflected directly in findings 42-44
 above rather than repeated here.
 
+**Finding 46 — the dynamical-systems mechanism (finding 41) is confirmed, not just
+exploratory: it replicates on genuinely held-out data, using the same single-shot holdout
+protocol as finding 33-B.** This investigation tried a very large number of methods and
+framings over the course of several months (now 46 numbered findings), and only finding 33's
+core claim had previously been checked against a truly untouched 20% holdout. Every other
+addition — including the Lyapunov-exponent mechanism explanation, the single most important
+addition beyond the core claim — had only been tested on the full/exploratory sample. Given
+how much model-searching happened earlier in this investigation, that is a real, not merely
+theoretical, exposure to the "garden of forking paths" problem (Gelman & Loken, 2013;
+Coqueret, 2024, *"Forking paths in financial economics,"* makes the identical point for this
+exact setting: correlated, sequentially-explored model variants on the same financial panel
+can produce findings that look individually significant without being genuinely robust). The
+mechanism explanation needed its own confirmatory test before being presented as established
+rather than suggestive.
+
+`holdout_lyapunov_check.py` mirrors finding 33-B's protocol exactly: the same 80/20 split per
+asset, and — going a step further than finding 33-B needed to — the atypical/typical split
+threshold is learned ONLY from the pre-cutoff training period and then frozen and applied to
+the held-out folds, so no information from the holdout period leaks into the split criterion
+itself.
+
+| asset | held-out n | mean LLE, atypical | mean LLE, typical | difference | p-value |
+|---|---|---|---|---|---|
+| Brent | 318 | +0.832 | +0.995 | **-0.163** | p<0.001 |
+| S&P 500 | 334 | +0.821 | +0.938 | **-0.117** | p=0.001 |
+| Gold | 334 | +0.779 | +1.034 | **-0.255** | p<0.001 |
+| Bitcoin | 242 | +0.751 | +0.960 | **-0.209** | p<0.001 |
+| Ethereum | 193 | +0.751 | +0.943 | **-0.192** | p<0.001 |
+| Silver | 333 | +0.788 | +1.027 | **-0.238** | p<0.001 |
+| WTI Crude | 333 | +0.814 | +1.004 | **-0.190** | p<0.001 |
+
+**7 of 7 assets replicate the direction, and 7 of 7 are individually significant (p<0.05) on
+held-out data never used anywhere else in this investigation** — a materially stronger result
+than finding 33-B's held-out test, where only 3 of 7 assets were individually significant.
+Fisher's combined test across all 7 held-out assets lands at the floor of what a 2000-resample
+permutation test can resolve per asset (reported per-asset p-values are bounded below at
+p<0.0005 each); the resulting combined statistic is far beyond any conventional significance
+threshold — report this as **p ≪ 0.0001** rather than the literal near-zero value the
+calculation produces, consistent with finding 45's precision-of-language note about permutation
+test floors. This is now the single best-replicated result in the entire investigation and
+should be presented in any write-up as a confirmed finding, not an exploratory one — unlike
+the fusion, systemic-risk-index, Granger-network, and classical-baseline findings (35, 36,
+38-40, 43-44), which remain exploratory/suggestive pending their own held-out confirmation if
+that becomes a priority.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
