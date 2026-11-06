@@ -11,21 +11,18 @@
 
 ## Abstract (draft, ~150 words)
 
-We document, diagnose, and trace to its root cause a case of spurious predictability in
-delay-embedding-based financial forecasting. Across a multi-month investigation spanning four
-structurally different novelty/anomaly detectors (a diffusion-model reconstruction score,
-Isolation Forest, Local Outlier Factor, and Mahalanobis distance) and seven asset classes, we
-initially found that forecast accuracy was substantially higher on days flagged as locally
-atypical -- a result that survived nested walk-forward cross-validation, formal permutation
-testing, and a genuine single-shot out-of-sample holdout. We show this entire result was an
-artifact of a one-step index error in the standard delay-embedding convention, under which the
-embedding's most recent component is numerically identical to the first step of the very
-future return being predicted. We verify this diagnosis through six checks spanning different levels of pipeline complexity, including an
-algebraic proof, a pipeline-free correlation test, a null control on synthetic white noise,
-and a power test confirming the corrected pipeline retains the ability to detect genuine
-designed-in signal. We propose a simple diagnostic protocol -- a null-noise control plus
-surrogate-data testing -- that any future embedding-based forecasting study should run before
-reporting a positive result.
+We document and trace to its root cause a case of spurious predictability in
+delay-embedding-based financial forecasting. Testing four novelty/anomaly detectors across
+seven asset classes, we initially found forecast accuracy substantially higher on atypical
+days -- a result that survived walk-forward cross-validation, permutation testing, and a
+genuine out-of-sample holdout. It was an artifact of a one-step index error: the embedding's
+most recent component was numerically identical to the first step of the future return being
+predicted. We confirm this diagnosis with an algebraic proof, a pipeline-free correlation test,
+a null control on synthetic white noise, and a power test showing the corrected pipeline still
+detects genuine designed-in signal; all four detectors were affected identically, pointing to
+the shared embedding rather than any one method. We propose a null-noise-plus-surrogate-data
+protocol that would have caught this error in hours rather than months, and recommend it as
+standard practice before reporting a positive result in this class of study.
 
 ## 1. Introduction
 
@@ -61,9 +58,11 @@ error -- and which we recommend other researchers adopt -- is the paper's main c
    identical to part of the forecast target, and show it survives methods normally considered
    strong safeguards against overfitting (walk-forward CV, permutation testing, genuine
    out-of-sample holdout).
-2. We verify the diagnosis through six checks spanning increasing levels of pipeline complexity (not six independent sources of evidence -- checks 1 and 3 below are two representations of the same underlying fact, not separate evidence), including a
-   closed-form algebraic proof and a null-hypothesis control on synthetic data with a provably
-   known absence of structure.
+2. We verify the diagnosis at six increasing levels of pipeline complexity, from a closed-form
+   algebraic proof to a null-hypothesis control on synthetic data with a provably known
+   absence of structure -- noting explicitly that this is six checks at different levels of
+   abstraction, not six independent sources of evidence (checks 1 and 3 are two
+   representations of the same underlying fact).
 3. We show the error affected all four structurally different detectors tested identically,
    establishing that the apparent "finding" was a property of the shared embedding
    convention, not of any one detection method.
@@ -155,13 +154,16 @@ asset, evaluated exactly once.
 
 ### 4.1 The original result
 Using the method of Section 3, we found a substantial, statistically significant gap in
-forecast accuracy between high- and low-atypicality origins. [See Table 1 -- original,
-pre-fix numbers, e.g. the original Finding 31/33 table.] A genuine single-shot holdout test,
-touched for the first time after all model development was frozen, reproduced the effect at
-the panel level (Fisher-combined $p = 3.8\times 10^{-5}$ across seven assets). We additionally
-proposed and validated a dynamical-systems explanation (local Lyapunov exponents), which
-itself replicated on a second, independent holdout and was robust to parameter choices and to
-splitting the sample by calendar era.
+forecast accuracy between high- and low-atypicality origins: for example, the diffusion-ELBO
+detector showed an +8.3 percentage-point accuracy gap on Brent crude ($p<0.0001$), and three
+classical detectors (Isolation Forest, LOF, Mahalanobis-PCA) showed comparable or larger gaps
+on the same and other assets (Table 1 reports the full pre-fix comparison across four
+detectors and seven assets). A genuine single-shot holdout test, touched for the first time
+after all model development was frozen, reproduced the effect at the panel level
+(Fisher-combined $p = 3.8\times 10^{-5}$ across seven assets). We additionally proposed and
+validated a dynamical-systems explanation (local Lyapunov exponents), which itself replicated
+on a second, independent holdout and was robust to parameter choices and to splitting the
+sample by calendar era.
 
 ### 4.2 The surrogate-data control that exposed the problem
 Motivated by a standard robustness check for the dynamical-systems explanation specifically
@@ -180,40 +182,57 @@ We generated literal i.i.d. Gaussian white noise -- a process with, by construct
 genuine forecastable structure of any kind -- and ran the identical pipeline on it. The
 pipeline reported a "significant" atypicality-conditioned accuracy gap of 5-7 percentage
 points, with permutation $p$-values as low as the resolution floor of a 2000-resample test
-(0.0000), on every one of three independent noise draws. This result cannot be explained by
-anything except a defect in the measurement procedure itself.
+(0.0000), on every one of three initial noise draws (a result extended to ten trials across
+two assets in Section 5, with the same conclusion). A process with zero genuine predictive
+structure, by construction, cannot produce a genuine 5-7 point accuracy edge; this result can
+only be explained by a defect in the measurement procedure itself.
 
 ### 4.4 Root cause
-Tracing the index arithmetic: with origin index $j$, embedding length $M$, and delay $\tau$,
-the project's convention located "today's price" at array index $p = j + (M-1)\tau$ and
-defined the forecast target as the $H$-step return beginning at $p$. But the embedding's most
-recent component, $x_j^{(0)}$, is constructed from $\texttt{log\_ret}[j + (M-1)\tau]$ --
-exactly $\texttt{log\_ret}[p]$: the **first of the $H$ returns summed to produce the forecast
-target itself**. The feature used to assess how "atypical" today's state is, and to select
-which historical analogs look similar, was in fact one step of tomorrow, not a step of
-history. The correct convention is $p = j + M\tau$, which places the embedding entirely in the
-past relative to the forecast window with zero gap and zero overlap.
+In plain terms: the pipeline's "most recent known return" -- the feature used to judge how
+unusual today looks and which historical days resemble it -- was not actually known yet at the
+moment the forecast was made. It was one day into the future the model was supposedly
+predicting.
+
+More precisely: with origin index $j$, embedding length $M$, and delay $\tau$, the project's
+convention located "today's price" at array index $p = j + (M-1)\tau$ and defined the forecast
+target as the $H$-step return beginning at $p$. But the embedding's most recent component,
+$x_j^{(0)}$, is constructed from $\texttt{log\_ret}[j + (M-1)\tau]$ -- exactly
+$\texttt{log\_ret}[p]$: the **first of the $H$ returns summed to produce the forecast target
+itself**. The correct convention is $p = j + M\tau$, which places the embedding entirely in the
+past relative to the forecast window, with zero gap and zero overlap.
 
 ### 4.5 Why none of the standard safeguards caught it
-The error is baked into every fold's feature construction identically in both the "training"
-and the "held-out" portions of the data, because it is a fixed, deterministic property of the
-index arithmetic, not a property learned from or overfit to any particular sample. Walk-forward
-cross-validation protects against overfitting to a specific historical window; it provides no
-protection against a structural bias present uniformly across all windows. A genuine
-single-shot holdout protects against re-using information learned during model selection; it
-provides no protection against a bias baked into the feature-construction code that is applied
-identically, by construction, to the holdout period. Permutation testing protects against
-mistaking sampling noise for a real effect; it provides no protection when the "effect" is a
-deterministic artifact that appears in every resample with the same mechanism intact. None of
-these three standard safeguards -- individually considered strong evidence in the forecasting
-literature -- are designed to catch a fixed arithmetic bias in feature construction. A fourth
-tool, surrogate/null-data testing, is.
+The error sits in every fold's feature-construction code identically, in both the "training"
+and the "held-out" portions of the data -- it is a fixed, deterministic property of the index
+arithmetic, not something learned from or overfit to any particular sample. This is precisely
+why each of the three safeguards this literature relies on most heavily missed it:
+
+- **Walk-forward cross-validation** protects against overfitting to one historical window. It
+  offers no protection against a structural bias present identically in every window.
+- **A genuine single-shot holdout** protects against re-using information learned during model
+  selection. It offers no protection against a bias baked into the feature-construction code
+  itself, which is applied, by construction, the same way to the holdout period as to
+  everything else.
+- **Permutation testing** protects against mistaking sampling noise for a real effect. It
+  offers no protection when the "effect" is a deterministic artifact that reappears, with the
+  same mechanism intact, in every permutation.
+
+Each of these three tools is, individually, considered strong evidence in the forecasting
+literature -- and none of them is designed to catch a fixed arithmetic bias in feature
+construction, because none of them varies the feature-construction code itself. A fourth tool
+does: comparing the pipeline's output on real data against its output on data engineered to
+contain no real structure at all (Section 4.3; formalized as a general protocol in Section
+7.2) directly tests the feature-construction code, not the sample.
 
 ## 5. Verification
 
-Because of the scale of what the diagnosis implies (the central claim of a multi-month
-investigation is an artifact), we verified it through six checks spanning different levels of pipeline complexity before accepting it (full
-detail and numbers: README Findings 51-52 of the accompanying code repository).
+Because of the scale of what the diagnosis implies -- the central claim of a multi-month
+investigation turning out to be an artifact -- we did not accept it on the strength of any
+single check. The six checks below span increasing levels of pipeline complexity, from a
+closed-form algebraic identity to the full production pipeline; checks 1 and 3 are two
+representations of the same underlying fact rather than independent evidence, and are listed
+separately only because they operate at different levels of abstraction (full detail and
+numbers: README Findings 51-52 of the accompanying code repository).
 
 1. **Exact algebraic identity**: hand-derived and numerically confirmed that $x_j^{(0)}$ equals
    $\texttt{log\_ret}[p]$ exactly, not approximately, on a tiny synthetic price array.
@@ -249,19 +268,27 @@ non-significant; S&P 500: $-1.2$pp $\to -1.2$pp, materially unchanged).
 
 ## 6. Results After Correction
 
-Table 2 reports the corrected pipeline's results on real market data. [See README Finding 51
-for the single-detector table and Finding 53 for the full 4-detector $\times$ 7-asset
-comparison and the corrected holdout test.]
+**Table 2. Diffusion-ELBO accuracy gap, corrected pipeline, by asset.**
 
-- Across the original single-detector test (diffusion ELBO) on 5 assets: no accuracy gap
-  reaches significance ($p$ ranges 0.18 to 0.99; several point estimates are negative).
-- Across the full 4-detector $\times$ 7-asset comparison (28 tests): 1 of 28 reaches $p<0.05$
-  (Ethereum/Mahalanobis, $p=0.025$) -- indistinguishable from the $\approx$1.4 false positives
-  expected by chance at $\alpha=0.05$ across 28 independent tests.
-- The genuine single-shot holdout test, re-run with the corrected pipeline: every asset
-  individually non-significant; Fisher's combined $p$-value across the seven-asset panel is
-  **0.288**, versus the original (uncorrected) pipeline's $p=3.8\times 10^{-5}$ on the
-  identical protocol.
+| Asset | Accuracy gap | $p$-value |
+|---|---|---|
+| Brent | +2.4pp | 0.176 |
+| S&P 500 | -1.2pp | 0.692 |
+| Gold | -5.4pp | 0.985 |
+| Bitcoin | -1.7pp | 0.720 |
+| Ethereum | +1.2pp | 0.352 |
+
+No accuracy gap reaches significance; several point estimates are negative. Extending the
+comparison to all four detectors across the full seven-asset panel (28 tests; see README
+Finding 53 for the complete table) finds exactly 1 of 28 cells below $p=0.05$
+(Ethereum/Mahalanobis-PCA, $p=0.025$) -- indistinguishable from the $\approx$1.4 false
+positives expected by chance alone at $\alpha=0.05$ across 28 independent tests.
+
+The genuine single-shot holdout test, re-run with the corrected pipeline, tells the same
+story at the panel level: every asset is individually non-significant, and Fisher's combined
+$p$-value across the seven-asset panel is **0.288**, against the original (uncorrected)
+pipeline's $p = 3.8\times 10^{-5}$ on the identical protocol -- the strongest-looking evidence
+in the original investigation collapses to a result indistinguishable from chance.
 
 ## 7. Discussion
 
@@ -306,12 +333,13 @@ We set out to validate a claim that market states flagged as locally atypical by
 unsupervised novelty detector are more forecastable than typical states. The claim initially
 passed every standard validation step used in this literature. It did not survive a null-data
 control, because the apparent effect was in fact a one-step index error that gave the
-forecasting model partial access to its own target. We verify this diagnosis through six
-ways and show the corrected pipeline retains full power to detect genuine designed-in signal,
-ruling out that the correction merely broke the method. We offer the diagnostic protocol that
-exposed the error -- a null-noise control and a surrogate-data test, both standard tools in
-adjacent literatures but, to our knowledge, not yet standard practice in this specific
-subfield -- as this paper's primary, generalizable contribution.
+forecasting model partial access to its own target. We confirm this diagnosis at six
+increasing levels of pipeline complexity and show the corrected pipeline retains full power to
+detect genuine designed-in signal, ruling out that the correction merely broke the method. We
+offer the diagnostic protocol that exposed the error -- a null-noise control and a
+surrogate-data test, both standard tools in adjacent literatures but, to our knowledge, not
+yet standard practice in this specific subfield -- as this paper's primary, generalizable
+contribution.
 
 ## References
 
@@ -340,6 +368,9 @@ problem, even when there is no "fishing expedition" or "p-hacking" and the resea
 was posited ahead of time. Department of Statistics, Columbia University (working paper);
 published in revised form as "The Statistical Crisis in Science," *American Scientist*, 102(6),
 460 (2014).
+
+Good, P. I. (2005). *Permutation, Parametric, and Bootstrap Tests of Hypotheses* (3rd ed.).
+Springer Series in Statistics. Springer-Verlag.
 
 Hamill, T. M., & Whitaker, J. S. (2006). Probabilistic quantitative precipitation forecasts
 based on reforecast analogs: Theory and application. *Monthly Weather Review*, 134(11),
@@ -385,12 +416,25 @@ White, H. (2000). A reality check for data snooping. *Econometrica*, 68(5), 1097
 post-fix), the 1-of-28 detector-comparison result, the 68.3%/50.1% sign-correlation figures,
 and the normalization-check numbers (Brent +2.4pp -> -0.11pp) all match between this draft and
 the source-of-truth repository. The "six independent ways" phrasing was corrected throughout to
-"six checks spanning different levels of pipeline complexity" with an explicit note that checks
-1 and 3 are two representations of one fact, not independent evidence. References are now
-complete and verified against primary sources, except the decomposition-leakage cryptocurrency
+"six checks at different levels of pipeline complexity" with an explicit note that checks 1 and
+3 are two representations of one fact, not independent evidence. References are now complete
+and verified against primary sources, except the decomposition-leakage cryptocurrency
 preprint's author, which could not be independently confirmed and is flagged for manual
-verification before submission. Exact author/affiliation details for this paper's own authors
-are still pending a decision on target venue and submission timeline. Author/affiliation
-details and Section 3's exact numeric tables should still be given one final cross-check
-against README.md immediately before submission, since the README remains the living source of
-truth and this file is a periodically-updated snapshot of it.*
+verification before submission.
+
+A full prose pass was completed on 2026-11-06, in the order: Abstract (trimmed from ~190 to 156
+words to fit IJF's 100-150-word guideline, with minor tolerance), Section 4 "The Error" (added
+concrete example numbers in 4.1 instead of a bare table pointer; added a plain-language framing
+sentence to 4.4 before the formal derivation; restructured 4.5 into bulleted per-safeguard
+explanations and gave it a concrete closing sentence instead of a one-line fragment), Section 5
+"Verification" (reframed the opening paragraph to state explicitly, before the list, that this
+is not six independent proofs), Section 6 "Results" (replaced the bracketed table pointer with
+an actual inline table and added a closing sentence contrasting the before/after holdout
+result), Section 7 "Discussion" (reviewed, no changes needed), and Section 1 "Introduction"
+(tightened Contribution #2's phrasing to match Section 5; added the missing Good (2005)
+reference, which was cited in-text but absent from the bibliography).
+
+Still open before submission: exact author/affiliation details and target-venue decision; final
+manual confirmation of the decomposition-leakage preprint's author; one last cross-check of
+Section 3's numeric tables against README.md immediately before submission, since the README
+remains the living source of truth and this file is a periodically-updated snapshot of it.*
