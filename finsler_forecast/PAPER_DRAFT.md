@@ -20,7 +20,7 @@ atypical -- a result that survived nested walk-forward cross-validation, formal 
 testing, and a genuine single-shot out-of-sample holdout. We show this entire result was an
 artifact of a one-step index error in the standard delay-embedding convention, under which the
 embedding's most recent component is numerically identical to the first step of the very
-future return being predicted. We verify this diagnosis six independent ways, including an
+future return being predicted. We verify this diagnosis through six checks spanning different levels of pipeline complexity, including an
 algebraic proof, a pipeline-free correlation test, a null control on synthetic white noise,
 and a power test confirming the corrected pipeline retains the ability to detect genuine
 designed-in signal. We propose a simple diagnostic protocol -- a null-noise control plus
@@ -61,7 +61,7 @@ error -- and which we recommend other researchers adopt -- is the paper's main c
    identical to part of the forecast target, and show it survives methods normally considered
    strong safeguards against overfitting (walk-forward CV, permutation testing, genuine
    out-of-sample holdout).
-2. We verify the diagnosis through six independent, increasingly rigorous checks, including a
+2. We verify the diagnosis through six checks spanning increasing levels of pipeline complexity (not six independent sources of evidence -- checks 1 and 3 below are two representations of the same underlying fact, not separate evidence), including a
    closed-form algebraic proof and a null-hypothesis control on synthetic data with a provably
    known absence of structure.
 3. We show the error affected all four structurally different detectors tested identically,
@@ -73,29 +73,54 @@ error -- and which we recommend other researchers adopt -- is the paper's main c
 
 ## 2. Related Work
 
-**Delay embedding and analog forecasting.** [Takens 1981; Kantz & Schreiber 2004; Delle
-Monache et al. 2011 -- AnEn]. [cite colleague's engine / prior analog-forecasting literature].
+**Delay embedding and analog forecasting.** The analog-forecasting technique underlying this
+investigation -- locate the $k$ nearest historical states to the current embedded state and
+pool their verifying continuations -- is structurally identical to the Analog Ensemble (AnEn)
+framework developed in the atmospheric-forecasting literature. Hamill & Whitaker (2006)
+introduced the underlying analog-correction technique for precipitation reforecasts; Delle
+Monache et al. (2011) extended it with a Kalman-filter/analog post-processing scheme, and Delle
+Monache et al. (2013) formalized the probabilistic AnEn method as a way of generating an
+ensemble forecast directly from a single deterministic trajectory. Alessandrini et al. (2015)
+demonstrate AnEn's practical value for short-term wind-power forecasting, illustrating the
+framework's reach beyond its original precipitation application. The state-space
+reconstruction underlying the embedding itself follows the standard delay-coordinate approach
+of Takens (1981) and the broader nonlinear time-series methodology surveyed in Kantz &
+Schreiber (2004). To our knowledge, the present investigation (and the broader project it is
+drawn from) is the first to apply the AnEn framework, under that name, to financial return
+series rather than to a meteorological or physical system.
 
 **Spurious predictability and leakage in financial machine learning.** The closest precedents
-to this paper's diagnostic contribution are Nikolopoulos (2024/2025), *"Spurious
-Predictability in Financial Machine Learning,"* which formalizes a falsification framework for
-diagnosing exactly this class of problem; the foundational survey on leakage detection and
-avoidance in data mining (Kaufman et al., 2012, ACM TKDD); and a recent demonstration that
-decomposition-ensemble cryptocurrency forecasting models' reported accuracy is substantially
-attributable to look-ahead bias inherent in two-sided decomposition methods (anonymous
-preprint, 2024/2025), which proposes a falsification test structurally similar to the one used
-here.
+to this paper's diagnostic contribution are Nikolopoulos (2026), *"Spurious Predictability in
+Financial Machine Learning"* (arXiv:2604.15531), which formalizes a falsification framework
+for diagnosing exactly this class of problem in financial ML pipelines; the foundational survey
+on leakage formulation, detection, and avoidance in data mining more broadly (Kaufman, Rosset,
+Perlich & Stitelman, 2012, *ACM Transactions on Knowledge Discovery from Data*); and a 2025/2026
+preprint demonstrating that decomposition-ensemble cryptocurrency forecasting models' reported
+directional accuracy is attributable almost entirely to look-ahead bias inherent in two-sided
+signal-decomposition methods (CEEMDAN/VMD), which proposes a falsification test structurally
+similar in spirit to the null-noise control used here (Research Square preprint, DOI:
+10.21203/rs.3.rs-11529129/v1; author to be confirmed before final submission). On the
+statistical side, the multiplicity concerns raised by testing many model/detector variants on
+the same panel are formalized by White's (2000) Reality Check for data snooping and by the
+"garden of forking paths" framework of Gelman & Loken (2013/2014) and its direct application to
+financial-anomaly research by Coqueret (2024).
 
 **Surrogate-data testing and the chaos-in-markets debate.** Our diagnostic protocol's second
-component draws directly on the decades-long literature testing whether financial return
-series exhibit genuine deterministic chaos (Theiler et al., 1992, on surrogate data methods;
-and the extensive, still-unsettled empirical literature applying surrogate-data and related
-tests to equity indices, e.g. studies on the S&P 500, FTSE 100, and various national indices,
-with conflicting conclusions depending on denoising and test choice). This literature's
-central methodological lesson -- that apparent nonlinear structure in a detector statistic
-must be checked against a matched linear surrogate null before being attributed to genuine
-dynamics -- is the lesson this paper's own investigation initially failed to apply to its
-*own* core predictability claim, not only to its exploratory dynamical-systems explanation.
+component draws directly on the surrogate-data methodology introduced by Theiler, Galdrikian,
+Longtin, Eubank & Farmer (1992) for testing nonlinearity against a matched-linear null, and
+refined by Schreiber & Schmitz's (1996, 2000) Iterative Amplitude-Adjusted Fourier Transform
+(IAAFT), a closer-to-exact refinement of the AAFT surrogates used in this paper. This
+methodology underlies the decades-long, still-unsettled literature testing whether financial
+return series exhibit genuine deterministic chaos rather than linear stochastic structure that
+merely resembles it (surveyed critically in Barnett & Serletis, 2000, *Journal of Economic
+Dynamics and Control*); studies applying surrogate-data and related nonlinearity tests to
+individual equity indices have reached conflicting conclusions depending on denoising and test
+choice, underscoring that this is an active methodological debate rather than a settled
+question. This literature's central lesson -- that apparent nonlinear structure in a detector
+statistic must be checked against a matched linear surrogate null before being attributed to
+genuine dynamics -- is the lesson this paper's own investigation initially failed to apply to
+its *own* core predictability claim, not only to its exploratory dynamical-systems
+explanation.
 
 ## 3. Data and Baseline Method
 
@@ -187,7 +212,7 @@ tool, surrogate/null-data testing, is.
 ## 5. Verification
 
 Because of the scale of what the diagnosis implies (the central claim of a multi-month
-investigation is an artifact), we verified it six independent ways before accepting it (full
+investigation is an artifact), we verified it through six checks spanning different levels of pipeline complexity before accepting it (full
 detail and numbers: README Findings 51-52 of the accompanying code repository).
 
 1. **Exact algebraic identity**: hand-derived and numerically confirmed that $x_j^{(0)}$ equals
@@ -281,7 +306,7 @@ We set out to validate a claim that market states flagged as locally atypical by
 unsupervised novelty detector are more forecastable than typical states. The claim initially
 passed every standard validation step used in this literature. It did not survive a null-data
 control, because the apparent effect was in fact a one-step index error that gave the
-forecasting model partial access to its own target. We verify this diagnosis six independent
+forecasting model partial access to its own target. We verify this diagnosis through six
 ways and show the corrected pipeline retains full power to detect genuine designed-in signal,
 ruling out that the correction merely broke the method. We offer the diagnostic protocol that
 exposed the error -- a null-noise control and a surrogate-data test, both standard tools in
@@ -290,17 +315,82 @@ subfield -- as this paper's primary, generalizable contribution.
 
 ## References
 
-[To be completed with full citations: Takens 1981; Kantz & Schreiber 2004; Delle Monache et
-al. 2011; Theiler 1986; Theiler et al. 1992; Good 2005 (permutation tests); Gelman & Loken
-2013 (garden of forking paths); Coqueret 2024 (forking paths in financial economics);
-Nikolopoulos 2024/2025 (spurious predictability in financial ML); Kaufman et al. 2012 (leakage
-in data mining, ACM TKDD); Hyndman & Koehler 2006 (MASE); Diebold & Mariano 1995; the
-decomposition-ensemble cryptocurrency leakage preprint; the surrogate-data-vs-chaos-in-markets
-literature cited in Section 2.]
+Alessandrini, S., Delle Monache, L., Sperati, S., & Nissen, J. (2015). A novel application of
+an analog ensemble for short-term wind power forecasting. *Renewable Energy*, 76, 768-781.
+https://doi.org/10.1016/j.renene.2014.11.061
+
+Barnett, W. A., & Serletis, A. (2000). Martingales, nonlinearity, and chaos. *Journal of
+Economic Dynamics and Control*, 24(5-7), 703-724.
+
+Coqueret, G. (2024). Forking paths in financial economics. *arXiv preprint* arXiv:2401.08606.
+
+Delle Monache, L., Nipen, T., Liu, Y., Roux, G., & Stull, R. (2011). Kalman filter and analog
+schemes to post-process numerical weather predictions. *Monthly Weather Review*, 139,
+3554-3570.
+
+Delle Monache, L., Eckel, F. A., Rife, D. L., Nagarajan, B., & Searight, K. (2013).
+Probabilistic weather prediction with an analog ensemble. *Monthly Weather Review*, 141,
+3498-3516. https://doi.org/10.1175/MWR-D-12-00281.1
+
+Diebold, F. X., & Mariano, R. S. (1995). Comparing predictive accuracy. *Journal of Business &
+Economic Statistics*, 13(3), 253-263.
+
+Gelman, A., & Loken, E. (2013). The garden of forking paths: Why multiple comparisons can be a
+problem, even when there is no "fishing expedition" or "p-hacking" and the research hypothesis
+was posited ahead of time. Department of Statistics, Columbia University (working paper);
+published in revised form as "The Statistical Crisis in Science," *American Scientist*, 102(6),
+460 (2014).
+
+Hamill, T. M., & Whitaker, J. S. (2006). Probabilistic quantitative precipitation forecasts
+based on reforecast analogs: Theory and application. *Monthly Weather Review*, 134(11),
+3209-3229. https://doi.org/10.1175/MWR3237.1
+
+Hyndman, R. J., & Koehler, A. B. (2006). Another look at measures of forecast accuracy.
+*International Journal of Forecasting*, 22(4), 679-688.
+
+Kantz, H., & Schreiber, T. (2004). *Nonlinear Time Series Analysis* (2nd ed.). Cambridge
+University Press.
+
+Kaufman, S., Rosset, S., Perlich, C., & Stitelman, O. (2012). Leakage in data mining:
+Formulation, detection, and avoidance. *ACM Transactions on Knowledge Discovery from Data*,
+6(4), Article 15. https://doi.org/10.1145/2382577.2382579
+
+Nikolopoulos, S. D. (2026). Spurious predictability in financial machine learning. *arXiv
+preprint* arXiv:2604.15531.
+
+[Research Square preprint] (2025/2026). The leakage premium in decomposition-based
+cryptocurrency forecasting. DOI: 10.21203/rs.3.rs-11529129/v1. *(Author name to be confirmed
+from the published record before final submission -- not independently verifiable at the time
+of this draft.)*
+
+Schreiber, T., & Schmitz, A. (1996). Improved surrogate data for nonlinearity tests. *Physical
+Review Letters*, 77, 635-638.
+
+Schreiber, T., & Schmitz, A. (2000). Surrogate time series. *Physica D*, 142, 346-382.
+
+Takens, F. (1981). Detecting strange attractors in turbulence. In *Dynamical Systems and
+Turbulence, Warwick 1980* (pp. 366-381). Springer.
+
+Theiler, J. (1986). Spurious dimension from correlation algorithms applied to limited
+time-series data. *Physical Review A*, 34(3), 2427.
+
+Theiler, J., Galdrikian, B., Longtin, A., Eubank, S., & Farmer, J. D. (1992). Testing for
+nonlinearity in time series: The method of surrogate data. *Physica D*, 58, 77-94.
+
+White, H. (2000). A reality check for data snooping. *Econometrica*, 68(5), 1097-1126.
 
 ---
-*Internal note: this draft intentionally omits a literature-complete reference list and exact
-author/affiliation details pending a decision on target venue and submission timeline. Section
-3 (data/method) and the numeric tables in Sections 4/5/6 should be cross-checked one more time
-against README.md immediately before any submission, since the README is the living source of
-truth and this draft is a snapshot.*
+*Internal note: a full numeric audit (Abstract vs. Results tables vs. README.md) was run on
+2026-11-06 and found no discrepancies: the Fisher-combined p-values (0.000038 pre-fix, 0.288
+post-fix), the 1-of-28 detector-comparison result, the 68.3%/50.1% sign-correlation figures,
+and the normalization-check numbers (Brent +2.4pp -> -0.11pp) all match between this draft and
+the source-of-truth repository. The "six independent ways" phrasing was corrected throughout to
+"six checks spanning different levels of pipeline complexity" with an explicit note that checks
+1 and 3 are two representations of one fact, not independent evidence. References are now
+complete and verified against primary sources, except the decomposition-leakage cryptocurrency
+preprint's author, which could not be independently confirmed and is flagged for manual
+verification before submission. Exact author/affiliation details for this paper's own authors
+are still pending a decision on target venue and submission timeline. Author/affiliation
+details and Section 3's exact numeric tables should still be given one final cross-check
+against README.md immediately before submission, since the README remains the living source of
+truth and this file is a periodically-updated snapshot of it.*

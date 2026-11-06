@@ -1440,7 +1440,10 @@ the FIRST of the `HORIZON` returns summed to produce the "actual future return" 
 in this investigation tried to predict. The embedding's "most recent known return" was, in
 fact, one step into the future it was supposedly predicting.
 
-**Verified six independent ways before being trusted, given the scale of what it implies:**
+**Verified through six checks spanning different levels of pipeline complexity before being
+trusted, given the scale of what it implies** (note: checks 1 and 3 below are two
+representations of the same underlying algebraic fact, not two independent sources of
+evidence — grouped here by complexity level, not claimed as six independent proofs):
 
 1. **Exact algebraic identity**, hand-derived and confirmed numerically on a tiny synthetic
    price array: `pc[j][0] == log_ret[p]` exactly (not approximately).
