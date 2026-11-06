@@ -1,0 +1,75 @@
+Brent (global, n=1514, 416s):
+  Diffusion        gap= +2.61pp p=0.1645  Spearman(rho,|leak|)=+0.230 (p=1.1e-19)
+  IsolationForest  gap= +1.78pp p=0.2515  Spearman(rho,|leak|)=+0.240 (p=3.376e-21)
+  LOF              gap= +0.16pp p=0.4770  Spearman(rho,|leak|)=+0.231 (p=1.02e-19)
+  Mahalanobis-PCA  gap= +0.68pp p=0.3980  Spearman(rho,|leak|)=+0.238 (p=5.75e-21)
+Brent (causal, n=1514, 400s):
+  Diffusion        gap= -0.41pp p=0.5620  Spearman(rho,|leak|)=+0.215 (p=2.681e-17)
+  IsolationForest  gap= +1.38pp p=0.2990  Spearman(rho,|leak|)=+0.240 (p=3.376e-21)
+  LOF              gap= +0.57pp p=0.4095  Spearman(rho,|leak|)=+0.231 (p=1.02e-19)
+  Mahalanobis-PCA  gap= +0.55pp p=0.4135  Spearman(rho,|leak|)=+0.238 (p=5.75e-21)
+S&P500 (global, n=1592, 426s):
+  Diffusion        gap= -1.24pp p=0.6915  Spearman(rho,|leak|)=+0.292 (p=1.23e-32)
+  IsolationForest  gap= -0.60pp p=0.6045  Spearman(rho,|leak|)=+0.318 (p=7.429e-39)
+  LOF              gap= -1.61pp p=0.7470  Spearman(rho,|leak|)=+0.285 (p=3.198e-31)
+  Mahalanobis-PCA  gap= -1.09pp p=0.6765  Spearman(rho,|leak|)=+0.310 (p=7.62e-37)
+S&P500 (causal, n=1592, 418s):
+  Diffusion        gap= -2.90pp p=0.8960  Spearman(rho,|leak|)=+0.292 (p=1.015e-32)
+  IsolationForest  gap= -1.36pp p=0.7195  Spearman(rho,|leak|)=+0.318 (p=7.429e-39)
+  LOF              gap= -0.43pp p=0.5840  Spearman(rho,|leak|)=+0.285 (p=3.198e-31)
+  Mahalanobis-PCA  gap= -1.31pp p=0.7175  Spearman(rho,|leak|)=+0.310 (p=7.62e-37)
+Gold (global, n=1592, 426s):
+  Diffusion        gap= -5.43pp p=0.9850  Spearman(rho,|leak|)=+0.099 (p=7.232e-05)
+  IsolationForest  gap= +0.88pp p=0.3455  Spearman(rho,|leak|)=+0.135 (p=6.142e-08)
+  LOF              gap= -0.53pp p=0.5825  Spearman(rho,|leak|)=+0.114 (p=4.793e-06)
+  Mahalanobis-PCA  gap= -0.95pp p=0.6395  Spearman(rho,|leak|)=+0.136 (p=5.118e-08)
+$GC=F: possibly delisted; no price data found  (period=20y)
+/home/alien-hawk/anaconda3/lib/python3.14/site-packages/numpy/_core/_methods.py:219: RuntimeWarning: Degrees of freedom <= 0 for slice
+  ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/home/alien-hawk/anaconda3/lib/python3.14/site-packages/numpy/_core/_methods.py:178: RuntimeWarning: invalid value encountered in divide
+  arrmean = um.true_divide(arrmean, div, out=arrmean,
+/home/alien-hawk/anaconda3/lib/python3.14/site-packages/numpy/_core/_methods.py:211: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+Gold (causal): skipped, n=0
+Bitcoin (global, n=1132, 259s):
+  Diffusion        gap= -1.72pp p=0.7200  Spearman(rho,|leak|)=+0.195 (p=3.988e-11)
+  IsolationForest  gap= +0.62pp p=0.4220  Spearman(rho,|leak|)=+0.183 (p=5.595e-10)
+  LOF              gap= -2.87pp p=0.8230  Spearman(rho,|leak|)=+0.185 (p=3.564e-10)
+  Mahalanobis-PCA  gap= -1.39pp p=0.6890  Spearman(rho,|leak|)=+0.193 (p=5.786e-11)
+Bitcoin (causal, n=1132, 261s):
+  Diffusion        gap= +0.13pp p=0.4990  Spearman(rho,|leak|)=+0.180 (p=9.75e-10)
+  IsolationForest  gap= +1.48pp p=0.3240  Spearman(rho,|leak|)=+0.183 (p=5.595e-10)
+  LOF              gap= -3.81pp p=0.8885  Spearman(rho,|leak|)=+0.185 (p=3.564e-10)
+  Mahalanobis-PCA  gap= -0.51pp p=0.5790  Spearman(rho,|leak|)=+0.193 (p=5.786e-11)
+Ethereum (global, n=889, 187s):
+  Diffusion        gap= +1.21pp p=0.3520  Spearman(rho,|leak|)=+0.105 (p=0.001763)
+  IsolationForest  gap= +3.64pp p=0.1350  Spearman(rho,|leak|)=+0.133 (p=6.611e-05)
+  LOF              gap= +1.09pp p=0.3715  Spearman(rho,|leak|)=+0.146 (p=1.27e-05)
+  Mahalanobis-PCA  gap= +6.16pp p=0.0250  Spearman(rho,|leak|)=+0.140 (p=2.79e-05)
+Ethereum (causal, n=889, 186s):
+  Diffusion        gap= -0.56pp p=0.5490  Spearman(rho,|leak|)=+0.088 (p=0.008734)
+  IsolationForest  gap= +3.90pp p=0.1205  Spearman(rho,|leak|)=+0.133 (p=6.611e-05)
+  LOF              gap= +1.86pp p=0.2985  Spearman(rho,|leak|)=+0.146 (p=1.27e-05)
+  Mahalanobis-PCA  gap= +6.88pp p=0.0165  Spearman(rho,|leak|)=+0.140 (p=2.79e-05)
+Silver (global, n=1592, 424s):
+  Diffusion        gap= +1.45pp p=0.3020  Spearman(rho,|leak|)=+0.147 (p=3.519e-09)
+  IsolationForest  gap= -2.05pp p=0.8015  Spearman(rho,|leak|)=+0.162 (p=7.148e-11)
+  LOF              gap= -1.83pp p=0.7740  Spearman(rho,|leak|)=+0.175 (p=2.177e-12)
+  Mahalanobis-PCA  gap= -1.80pp p=0.7620  Spearman(rho,|leak|)=+0.170 (p=8.413e-12)
+Silver (causal, n=1592, 427s):
+  Diffusion        gap= +0.93pp p=0.3675  Spearman(rho,|leak|)=+0.136 (p=4.892e-08)
+  IsolationForest  gap= -0.77pp p=0.6155  Spearman(rho,|leak|)=+0.162 (p=7.148e-11)
+  LOF              gap= +0.44pp p=0.4435  Spearman(rho,|leak|)=+0.175 (p=2.177e-12)
+  Mahalanobis-PCA  gap= -0.74pp p=0.6095  Spearman(rho,|leak|)=+0.170 (p=8.413e-12)
+WTI Crude (global, n=1592, 424s):
+  Diffusion        gap= -1.05pp p=0.6535  Spearman(rho,|leak|)=+0.214 (p=6.151e-18)
+  IsolationForest  gap= -0.34pp p=0.5505  Spearman(rho,|leak|)=+0.238 (p=6.121e-22)
+  LOF              gap= -0.18pp p=0.5180  Spearman(rho,|leak|)=+0.218 (p=1.565e-18)
+  Mahalanobis-PCA  gap= -0.12pp p=0.5160  Spearman(rho,|leak|)=+0.239 (p=3.584e-22)
+WTI Crude (causal, n=1592, 422s):
+  Diffusion        gap= +0.62pp p=0.4050  Spearman(rho,|leak|)=+0.195 (p=4.749e-15)
+  IsolationForest  gap= +0.36pp p=0.4375  Spearman(rho,|leak|)=+0.238 (p=6.118e-22)
+  LOF              gap= -0.03pp p=0.5110  Spearman(rho,|leak|)=+0.218 (p=1.565e-18)
+  Mahalanobis-PCA  gap= +0.30pp p=0.4425  Spearman(rho,|leak|)=+0.239 (p=3.584e-22)
+
+Saved to causal_norm_results.json

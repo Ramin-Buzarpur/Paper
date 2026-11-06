@@ -1,0 +1,15 @@
+Total grid cells: 54, x 5 seeds = 270 runs
+[1/54] M=2 tau=1 H=1 leak=0  iso=0.5115416827425256  lof=0.26107195397755856  maha=0.46144773698953323  elapsed=41s
+[11/54] M=2 tau=2 H=1 leak=1  iso=0.5012531328320824  lof=0.2005012531328343  maha=0.7518796992481214  elapsed=267s
+[21/54] M=3 tau=1 H=1 leak=2  iso=0.8020050125313304  lof=0.6015037593984984  maha=0.5513784461152849  elapsed=490s
+[31/54] M=3 tau=2 H=3 leak=0  iso=6.968648035182298  lof=5.763370690878138  maha=5.763370690878138  elapsed=690s
+[41/54] M=5 tau=1 H=3 leak=1  iso=10.44460207121578  lof=12.70449709178607  maha=8.636686054759542  elapsed=892s
+[51/54] M=5 tau=2 H=3 leak=2  iso=6.037735849056607  lof=4.830188679245282  maha=3.471698113207546  elapsed=1094s
+[54/54] M=5 tau=2 H=5 leak=2  iso=10.314465408805038  lof=10.062893081761011  maha=13.081761006289316  elapsed=1119s
+
+Done. Saved to monte_carlo_grid_results.json
+
+=== Mean gap by leak_steps (averaged over all M, tau, H, detectors) ===
+leak_steps=0: mean gap = +0.21pp (n_cells*detectors=54)
+leak_steps=1: mean gap = +7.14pp (n_cells*detectors=54)
+leak_steps=2: mean gap = +7.70pp (n_cells*detectors=54)
