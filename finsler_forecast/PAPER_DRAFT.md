@@ -1,34 +1,32 @@
-<!-- Working draft. Target venue: International Journal of Forecasting (or a comparable
-     forecasting-methodology journal). Structure follows IJF's guide for authors: short
-     abstract (100-150 words), numbered sections, minimal notation, references by
-     author-year. This file is a draft for internal iteration -- not a camera-ready
-     manuscript. The canonical, submission-ready version is paper.tex / paper.pdf; this file
-     is kept in sync as a readable companion. -->
+<!-- Working draft, kept in sync with paper.tex / paper.pdf (the canonical, submission-track
+     LaTeX source using Elsevier's elsarticle class). Target venue: International Journal of
+     Forecasting. This file is a readable companion for review -- paper.tex is the version to
+     compile and submit. -->
 
 # Spurious Predictability from an Embedding Index Error: A Case Study in Financial Analog
 # Forecasting
 
-**Authors:** Ramin Buzarpur (Department of Computer Engineering), Armin Buzarpur (Department of
-Electrical Engineering, Control Systems) — affiliations and emails to be confirmed.
+**Authors:** Ramin Buzarpur (Department of Computer Engineering, affiliation to be confirmed),
+Armin Buzarpur (Department of Electrical Engineering, Control Systems, affiliation to be
+confirmed). Corresponding author and institutional emails to be added before submission.
 
 ## Abstract
 
-Adaptive, multi-month model development can generate statistically significant forecasting
-results even when the underlying effect is an artifact of the pipeline itself rather than of
-the data. We document one such case in delay-embedding-based financial forecasting. Testing
-four structurally different novelty and anomaly detectors across seven asset classes, we
-initially found forecast accuracy substantially higher on days flagged as locally atypical, a
-result that survived walk-forward cross-validation, permutation testing, and a genuine
-out-of-sample holdout. The result turned out to be an artifact of a one-step index error: the
-embedding's most recent component was numerically identical to the first step of the future
-return the model was trying to predict. We confirm this diagnosis at several levels of
-pipeline complexity, from a closed-form algebraic proof to a pipeline-free correlation test, a
-null control on synthetic white noise, and a power test showing the corrected pipeline still
-detects genuine designed-in signal. All four detectors were affected identically, which points
-to the shared embedding rather than to any one detection method. We propose a two-part
-diagnostic protocol, a null-noise control paired with surrogate-data testing, that would have
-caught this error in hours rather than months, and we recommend it as standard practice before
-reporting a positive result in this class of study.
+We document a case of spurious predictability in delay-embedding-based financial forecasting
+and trace it to its root cause. Testing four novelty and anomaly detectors across seven asset
+classes, we initially found forecast accuracy substantially higher on days flagged as locally
+atypical, surviving walk-forward cross-validation, permutation testing, and a genuine
+out-of-sample holdout. The result was an artifact of a one-step index error: the embedding's
+most recent component was numerically identical to the first step of the future return being
+predicted. We confirm this algebraically, with a correlation test, a null control on synthetic
+white noise, an independent re-implementation, and a power test showing the corrected pipeline
+still detects genuine signal. All four detectors were affected identically, pointing to the
+shared embedding rather than any one method. We propose a null-noise-plus-surrogate-data
+diagnostic that would have caught this error in hours rather than months, and recommend it as
+standard practice before reporting a positive result in this class of study.
+
+**Keywords:** spurious predictability, data leakage, delay embedding, analog forecasting,
+surrogate data, anomaly detection
 
 ## 1. Introduction
 
@@ -50,11 +48,10 @@ diffusion-model reconstruction score, and, for robustness, three classical novel
 atypicality signal, we found across seven asset classes — an equity index, two energy
 benchmarks, two precious metals, and two cryptocurrencies — that forecast accuracy conditional
 on high atypicality was substantially and significantly higher than conditional on low
-atypicality. The result held up under nested walk-forward evaluation, combinatorial purged
-cross-validation, formal permutation testing (Good, 2005), and a genuine single-shot 20%
-holdout that had never been touched during model development. It even motivated a
-dynamical-systems explanation involving local Lyapunov exponents, which itself replicated on a
-second holdout.
+atypicality. The result held up under nested walk-forward evaluation, formal permutation
+testing (Good, 2005), and a genuine single-shot 20% holdout that had never been touched during
+model development. It even motivated a dynamical-systems explanation involving local Lyapunov
+exponents, which itself replicated on a second holdout.
 
 The result was wrong. Section 4 describes how we found out and, more importantly, why none of
 the safeguards above caught it. We think the diagnostic protocol that eventually exposed the
@@ -102,39 +99,50 @@ demonstrate AnEn's practical value for short-term wind-power forecasting, illust
 framework's reach beyond its original precipitation application. The state-space
 reconstruction underlying the embedding itself follows the standard delay-coordinate approach
 of Takens (1981) and the broader nonlinear time-series methodology surveyed in Kantz &
-Schreiber (2004). To our knowledge, the broader project this paper is drawn from is the first
-to apply the AnEn framework, under that name, to financial return series rather than to a
-meteorological or physical system.
+Schreiber (2004). Nearest-neighbor and analog methods have a long history in financial
+forecasting on their own terms; what the broader project this paper is drawn from attempted,
+and what we believe is less common, is to carry over the AnEn framework specifically, under
+that name and with its characteristic combination of embedding, causal analog selection, and
+ensemble pooling, from its native meteorological setting to financial return series.
 
 **Spurious predictability and leakage in financial machine learning.** The integration of
 machine learning into empirical finance has expanded the set of models and features available
 to researchers, but standard validation methods were largely developed for approximately
 i.i.d. data and can fail under the temporal dependence and causal-ordering constraints that
-financial time series impose (Kaufman, Rosset, Perlich & Stitelman, 2012). The closest
-precedent to this paper's diagnostic contribution is Nikolopoulos (2026), who proposes a
-falsification framework for financial ML pipelines that tests complete modeling workflows
-against synthetic reference distributions with known predictability — a goal closely related
-to the null-noise control used here, though developed independently and applied to a
-different class of method. On the statistical side, the multiplicity concerns raised by
-testing many model and detector variants on the same panel are formalized by White's (2000)
-Reality Check for data snooping and by the garden of forking paths framework of Gelman & Loken
-(2013), applied directly to financial-anomaly research by Coqueret (2024).
+financial time series impose (Kaufman, Rosset, Perlich & Stitelman, 2012). Kapoor & Narayanan
+(2023) document how similar leakage failures have undermined reproducibility across
+machine-learning-based science more broadly, outside finance specifically, which suggests the
+failure mode we document here is a special case of a more general problem rather than one
+confined to financial applications. The closest precedent to this paper's diagnostic
+contribution is Nikolopoulos (2026), who proposes a falsification framework for financial ML
+pipelines that tests complete modeling workflows against synthetic reference distributions
+with known predictability — a goal closely related to the null-noise control used here,
+though developed independently and applied to a different class of method. On the statistical
+side, the multiplicity concerns raised by testing many model and detector variants on the same
+panel are formalized by White's (2000) Reality Check for data snooping and by the garden of
+forking paths framework of Gelman & Loken (2013), applied directly to financial-anomaly
+research by Coqueret (2024).
 
 **Surrogate-data testing and the chaos-in-markets debate.** The second component of our
 diagnostic protocol draws directly on the surrogate-data methodology introduced by Theiler,
 Galdrikian, Longtin, Eubank & Farmer (1992) for testing nonlinearity against a matched-linear
 null, later refined by Schreiber & Schmitz (1996, 2000) with the Iterative Amplitude-Adjusted
-Fourier Transform (IAAFT), a closer-to-exact version of the AAFT surrogates used here. This
-methodology underlies a decades-long, still-unsettled literature on whether financial return
-series exhibit genuine deterministic chaos or linear stochastic structure that merely
-resembles it, critically surveyed in Barnett & Serletis (2000). Studies applying
-surrogate-data and related nonlinearity tests to individual equity indices have reached
-conflicting conclusions depending on denoising and test choice, which underscores that this
-remains an open methodological question rather than a settled one. The lesson we take from
-that literature — that apparent nonlinear structure in a detector statistic has to be checked
-against a matched linear surrogate null before it can be attributed to genuine dynamics — is
-precisely the lesson our own investigation initially failed to apply to its own core
-predictability claim, and not only to its exploratory dynamical-systems explanation.
+Fourier Transform (IAAFT), which matches the target spectrum more closely than the AAFT
+surrogates used here at higher computational cost; we chose AAFT because several hundred
+surrogates had to be generated per test, and its approximate spectral match was sufficient for
+the question asked (Section 5). This methodology underlies a decades-long, still-unsettled
+literature on whether financial return series exhibit genuine deterministic chaos or linear
+stochastic structure that merely resembles it, critically surveyed in Barnett & Serletis
+(2000). Studies applying surrogate-data and related nonlinearity tests to individual equity
+indices have reached conflicting conclusions depending on denoising and test choice:
+Inglada-Pérez (2020) finds no clear evidence of chaos across four major indices, while Vogl &
+Roetzel (2022) report an S&P 500 return series consistent with roughly equal parts stochastic
+and deterministic chaos once the data is wavelet-denoised first. That contrast underscores
+that this remains an open methodological question rather than a settled one. The lesson we
+take from that literature — that apparent nonlinear structure in a detector statistic has to
+be checked against a matched linear surrogate null before it can be attributed to genuine
+dynamics — is precisely the lesson our own investigation initially failed to apply to its own
+core predictability claim, and not only to its exploratory dynamical-systems explanation.
 
 ## 3. Data and Baseline Method
 
@@ -147,46 +155,81 @@ years depending on listing date).
 ### 3.2 Delay embedding and analog selection
 Log returns $r_t = \log(P_t / P_{t-1})$ are delay-embedded into $\mathbb{R}^M$ with $M=3$,
 $\tau=1$: $x_j = (r_{t}, r_{t-\tau}, r_{t-2\tau})$. For a forecast origin, the $K=7$ nearest
-historical analogs, by a learned feature distance described in Section 3.3, are selected
-causally, excluding a Theiler window of 10 days around the origin to avoid trivial temporal
-auto-matches (Theiler, 1986). The forecast is the sign of the mean $H=3$-day forward return
-realized by the selected analogs.
+historical analogs are selected causally, by Euclidean distance in the diffusion model's
+hidden-layer feature space described in Section 3.3 (not raw embedding distance), excluding a
+Theiler window of 10 days around the origin to avoid trivial temporal auto-matches (Theiler,
+1986). The forecast is the sign of the mean $H=3$-day forward return realized by the selected
+analogs.
 
 ### 3.3 Atypicality detectors
-Four detectors score each origin's atypicality: the reconstruction loss (ELBO) of a small
-denoising diffusion model, a 2-layer MLP with hidden width 32, trained causally on the
-embedded history; Isolation Forest; Local Outlier Factor; and Mahalanobis distance in a
-PCA-reduced space with Ledoit-Wolf shrinkage. All four are fit causally and retrained
-periodically on history up to the current origin only.
+Four detectors score each origin's atypicality. The first is the reconstruction loss (ELBO) of
+a small denoising diffusion model (Ho, Jain & Abbeel, 2020), a 2-layer MLP with hidden width
+32 and 50 diffusion steps, trained with Adam (learning rate $2\times10^{-3}$, batch size 128,
+weight decay $10^{-5}$, 50 epochs) causally on the embedded history up to the current origin,
+and retrained every 20 folds on an expanding window. We chose a diffusion-model ELBO over a
+plain autoencoder's reconstruction error because the ELBO is an estimate of the model's
+log-density under the data distribution, aggregated over the full noise schedule, rather than
+a single point estimate of reconstruction error at one noise level; it is, in this sense, a
+more complete density-based novelty score, at the cost of more training compute than an
+autoencoder would need. We do not claim the diffusion architecture is necessary for the
+qualitative result, and Tables 1 and 2 show it is not: the same pattern, before correction,
+and its disappearance, after correction, are common to three classical detectors that do not
+involve a diffusion model at all. The remaining three detectors are Isolation Forest (Liu,
+Ting & Zhou, 2008) with 100 trees, Local Outlier Factor (Breunig, Kriegel, Ng & Sander, 2000)
+with 30 neighbors, and Mahalanobis distance in a 3-component PCA-reduced space with
+Ledoit-Wolf shrinkage (Ledoit & Wolf, 2004). All four are fit causally on an expanding window
+(minimum 250 observations) and retrained every 20 folds on history up to the current origin
+only; none has access to any data at or after the origin being scored.
 
 ### 3.4 Evaluation
-We use nested nonoverlapping walk-forward folds with step size $H$, a 2000-resample
-permutation test for the accuracy-gap statistic defined by a median split on the atypicality
-score, Fisher's method to combine p-values across the seven-asset panel, and, separately, a
-single untouched 20% holdout per asset, evaluated exactly once.
+We use nested nonoverlapping walk-forward folds with step size $H$ over an expanding window
+starting at 250 observations. The accuracy-gap statistic is defined by a median split on the
+atypicality score, where the median at fold $i$ is computed causally from the atypicality
+scores of folds strictly before $i$, never from the full sample; its significance is assessed
+with a 2000-resample permutation test. We combine p-values across the seven-asset panel with
+Fisher's method, noting that this assumes independence across assets, which does not hold
+exactly for financial return series; under positive dependence, Fisher's method is
+anti-conservative (it understates the combined p-value), so the panel-level p-values we report
+below should be read as more optimistic than a dependence-robust combination would give.
+Separately, we hold out the last 20% of each asset's history, untouched during all model
+development, and evaluate it exactly once.
 
 ## 4. The Error: Discovery, Diagnosis, and Fix
 
 ### 4.1 The original result
 Using the method of Section 3, we found a substantial, statistically significant gap in
-forecast accuracy between high- and low-atypicality origins. The diffusion-ELBO detector, for
-example, showed a +8.3 percentage-point accuracy gap on Brent crude ($p<0.0001$), and the
-three classical detectors showed comparable or larger gaps on the same and other assets
-(Table 1 reports the full pre-fix comparison across all four detectors and seven assets). A
-genuine single-shot holdout test, touched for the first time only after model development was
-frozen, reproduced the effect at the panel level, with a Fisher-combined $p = 3.8\times
-10^{-5}$ across the seven assets. We additionally proposed and validated a dynamical-systems
+forecast accuracy between high- and low-atypicality origins, consistently across all four
+detectors and all seven assets (Table 1). The diffusion-ELBO detector, for example, showed a
++8.3 percentage-point accuracy gap on Brent crude (p<0.0001), and the three classical
+detectors showed comparable or larger gaps on the same and other assets. A genuine
+single-shot holdout test, touched for the first time only after model development was frozen,
+reproduced the effect at the panel level, with a Fisher-combined $p = 3.8\times 10^{-5}$
+across the seven assets. We additionally proposed and validated a dynamical-systems
 explanation involving local Lyapunov exponents, which itself replicated on a second,
 independent holdout and proved robust to parameter choices and to splitting the sample by
-calendar era.
+calendar era. Section 4.5 returns to what happened to this explanation once the indexing
+error was corrected.
+
+**Table 1. Accuracy gap by detector and asset, uncorrected pipeline (percentage points;
+p-values from a 2000-resample permutation test).**
+
+| Asset | Diffusion | Isolation Forest | LOF | Mahalanobis-PCA |
+|---|---|---|---|---|
+| Brent | 8.3, p<0.0001 | 13.5, p<0.0001 | 13.4, p<0.0001 | 13.1, p<0.0001 |
+| S&P 500 | 2.9, p=0.113 | 4.8, p=0.028 | 5.3, p=0.013 | 5.1, p=0.016 |
+| Gold | 4.9, p=0.022 | 11.4, p<0.0001 | 7.4, p=0.002 | 8.8, p<0.0001 |
+| Bitcoin | 11.0, p<0.0001 | 11.9, p<0.0001 | 12.0, p<0.0001 | 12.6, p<0.0001 |
+| Ethereum | 6.5, p=0.027 | 14.4, p<0.0001 | 8.7, p=0.003 | 13.8, p<0.0001 |
+| Silver | 10.9, p<0.0001 | 10.9, p<0.0001 | 11.1, p<0.0001 | 13.8, p<0.0001 |
+| WTI Crude | 10.1, p<0.0001 | 7.5, p=0.002 | 10.2, p<0.0001 | 9.3, p<0.0001 |
 
 ### 4.2 The surrogate-data control that exposed the problem
 The problem surfaced during what we intended as a routine robustness check of the
 dynamical-systems explanation, not of the core claim. We generated AAFT surrogate return
-series, matching the real data's amplitude distribution and linear power spectrum exactly
-while randomizing phases to destroy any nonlinear temporal structure, and re-ran the
-local-Lyapunov analysis on them. The purely linear surrogates reproduced, and in fact
-exceeded, the real data's effect size, for both a cheap $k$-NN atypicality proxy and the
+series, matching the real data's amplitude distribution exactly and its linear power spectrum
+approximately while randomizing phases to destroy any nonlinear temporal structure, and re-ran
+the local-Lyapunov analysis on them. The purely linear surrogates reproduced, and in fact
+exceeded, the real data's effect size, for both a cheap k-NN atypicality proxy and the
 production diffusion-ELBO detector. Taken on its own, that result does not require positing a
 coding error; the surrogate-data literature is full of cases where apparent nonlinear
 structure turns out to be linear. It did, however, prompt us to apply the same control to the
@@ -214,10 +257,39 @@ convention located "today's price" at array index $p = j + (M-1)\tau$ and define
 target as the $H$-step return beginning at $p$. The embedding's most recent component,
 $x_j^{(0)}$, is constructed from `log_ret[j + (M-1)*tau]`, which is exactly `log_ret[p]`: the
 first of the $H$ returns summed to produce the forecast target itself. The correct convention
-is $p = j + M\tau$, which places the embedding entirely in the past relative to the forecast
-window, with zero gap and zero overlap.
+is $p = j + M\tau$. Under this convention, the embedding's most recent return is
+`log_ret[p-tau]`, the return that ends exactly at today's price, `prices[p]`; the forecast
+target is the return that begins at `prices[p]` and extends forward. The two are adjacent in
+the return index, so no day of history is skipped, but the target return itself is entirely
+unrealized as of today, which is what the original, off-by-one convention failed to guarantee.
 
-### 4.5 Why none of the standard safeguards caught it
+### 4.5 The fate of the Lyapunov explanation
+The question this section answers is whether the dynamical-systems explanation (Section 4.1)
+is a second casualty of the same indexing error, or a separate problem. It is the latter. The
+local-Lyapunov-exponent calculation uses the origin index $j$ and a forward offset directly;
+it never reads the mis-specified index $p$ at all, so it was never affected by the bug in the
+first place. Re-running it against the corrected pipeline's atypicality scores confirms this
+directly: the atypical-versus-typical gap in local Lyapunov exponents is essentially unchanged
+from the original, uncorrected run on five of seven assets (for example, Brent: $-0.166$
+before correction, $-0.166$ after), and remains of the same sign and order of magnitude on the
+remaining two, Bitcoin ($-0.206$ before, $-0.216$ after) and Ethereum ($-0.203$ before,
+$-0.179$ after), a gap we attribute to the usual combination of updated price history between
+runs and shifted fold boundaries near the end of these two shorter series, not to the indexing
+fix. All seven remain significant at p<0.001 in both runs. The index fix, in other words, does
+not explain away the Lyapunov result.
+
+That does not rehabilitate it. The surrogate-data control in Section 4.2 already showed, by a
+different route, that this same gap is reproduced, and in fact exceeded, by AAFT surrogates
+with no genuine dynamics of any kind. Taken together, the two results describe two independent
+problems rather than one shared cause: the accuracy-gap claim was an artifact of the index
+error and disappears once it is fixed; the Lyapunov explanation was never touched by that
+error, but is a separate geometric artifact of estimating divergence rates from a finite,
+nearest-neighbor-based point cloud, exposed by the surrogate-data test rather than by the
+index fix. We flag this distinction explicitly because conflating the two — concluding that
+fixing the index error also explains the Lyapunov result, or that the Lyapunov result's
+survival means the index fix was somehow incomplete — would both be incorrect.
+
+### 4.6 Why none of the standard safeguards caught it
 The error sits in every fold's feature-construction code identically, in both the training and
 the held-out portions of the data, because it is a fixed, deterministic property of the index
 arithmetic rather than something learned from or overfit to any particular sample. That is
@@ -226,18 +298,17 @@ Walk-forward cross-validation protects against overfitting to one historical win
 offers no protection against a structural bias present identically in every window. A genuine
 single-shot holdout protects against re-using information learned during model selection, but
 offers no protection against a bias baked into the feature-construction code itself, which is
-applied, by construction, the same way to the holdout period as to everything else.
-Permutation testing protects against mistaking sampling noise for a real effect, but offers no
-protection when the effect is a deterministic artifact that reappears, with the same mechanism
-intact, in every permutation.
+applied, by construction, the same way to the holdout period as to everything else. Permutation
+testing protects against mistaking sampling noise for a real effect, but offers no protection
+when the effect is a deterministic artifact that reappears, with the same mechanism intact, in
+every permutation.
 
 Each of these three tools is, individually, considered strong evidence in the forecasting
 literature, and none of them is designed to catch a fixed arithmetic bias in feature
 construction, because none of them varies the feature-construction code itself. A fourth tool
 does: comparing the pipeline's output on real data against its output on data engineered to
-contain no real structure at all (Section 4.3, formalized as a general protocol in Section
-7.2) tests the feature-construction code directly, rather than the sample it happens to be run
-on.
+contain no real structure at all (Section 4.3, formalized as a general protocol in Section 7.2)
+tests the feature-construction code directly, rather than the sample it happens to be run on.
 
 ## 5. Verification
 
@@ -246,58 +317,69 @@ to be an artifact, we did not accept it on the strength of any single check. The
 below span increasing levels of pipeline complexity, from a closed-form algebraic identity to
 the full production pipeline. Checks 1 and 3 are two representations of the same underlying
 fact rather than independent evidence, and are listed separately only because they operate at
-different levels of abstraction. Full detail and numbers are available in Findings 51-52 of
-the accompanying code repository.
+different levels of abstraction. Full detail and numbers are available in the accompanying
+code repository (see Data and Code Availability, below).
 
 1. **Exact algebraic identity.** We hand-derived and numerically confirmed that $x_j^{(0)}$
    equals `log_ret[p]` exactly, not approximately, on a tiny synthetic price array.
-2. **Generalization across the real series.** The same overlap held over 33 origins (47 in a
-   fully independent re-implementation) spread across real Brent history, universally under
-   the old formula and never under the corrected one.
+2. **Generalization across the real series.** We repeated the same check over many origins
+   spread across real Brent history, using two different sampling steps in two separate
+   scripts (33 origins at one spacing, 47 at another, in a fully independent re-implementation
+   described below): the overlap held universally under the old formula and never under the
+   corrected one, in both runs.
 3. **A pipeline-free, model-free direct test.** The sign of $x_j^{(0)}$ matched the sign of
-   the actual future return in 68.3% of folds under the old convention, against 50.1%, chance,
-   under the fix. That 68.3% rather than roughly 100% is itself consistent with the diagnosis,
-   since the leaked component is only one of three summands making up the target.
-4. **A null control repeated ten times** across two assets and two random seeds. Under the
-   fixed pipeline, the mean permutation p-value across trials was 0.496, close to the
-   theoretical expectation of exactly 0.5 under a true null, with a false-positive rate
-   matching the nominal 5% level.
+   the actual future return in 68.3% of origins under the old convention, against 50.1%,
+   consistent with chance, under the fix. That 68.3% rather than roughly 100% is itself
+   consistent with the diagnosis, since the leaked component is only one of three summands
+   making up the target.
+4. **A null control repeated across ten independent draws** (three on Brent, seven more on
+   S&P 500, with different random seeds). Under the fixed pipeline, the mean permutation
+   p-value across all ten draws was 0.496, consistent with the theoretical expectation of 0.5
+   under a true null; one of the ten crossed the nominal 5% significance threshold (p=0.037),
+   which is itself unremarkable at that sample size.
 5. **A fully independent, from-scratch script** with no imports from the project's own
    codebase, using a fresh data download and hand-written embedding and index arithmetic,
-   reproduced the identical result. This rules out a shared misreading of the code baked into
-   the investigation's own tooling.
-6. **A power test with a known, designed-in signal.** A synthetic series with an explicit,
-   by-construction magnitude-conditional mean-reversion rule — after any return exceeding one
-   standard deviation, the next three returns are deliberately biased in the opposite
-   direction — was correctly detected by the fixed pipeline (accuracy rose from 52.2% to
-   58.2%, gap $p=0.011$), confirming that the fix did not simply desensitize the method.
+   reproduced the same algebraic-overlap result as check 2 above (47 of 47 origins overlapping
+   under the old formula, 0 of 47 under the fix). This rules out a shared misreading of the
+   code baked into the investigation's own tooling.
+6. **A power test with a known, designed-in signal.** We built a synthetic series with an
+   explicit mean-reversion rule: after any return exceeding one standard deviation, the next
+   three returns are deliberately biased in the opposite direction. The fixed pipeline
+   correctly detected it (accuracy rose from 52.2% to 58.2%, gap p=0.011), confirming that the
+   fix did not simply desensitize the method.
 
-We also ran a systematic six-point leakage audit beyond the specific bug described above,
-covering data-feature temporal ordering, embedding-normalization causality, train/test
-shuffling, target-feature alignment, residual embedding overlap, and detector self-inclusion.
-One further issue turned up, smaller and independent of the main one: the embedding's scale
-normalization is computed over the full series rather than causally. We disclose it here and
-show it does not materially affect the result (Brent: +2.4pp moves to -0.1pp under a corrected
-causal-scale variant, both non-significant; S&P 500: -1.2pp stays at -1.2pp).
+We also ran a broader leakage audit covering data-feature temporal ordering, embedding
+normalization, train/test shuffling, and detector self-inclusion. Two of these checks were
+direct re-verifications that the indexing error above was gone and stayed gone (target-feature
+alignment and residual embedding overlap, already covered by checks 1, 3, and 5), rather than
+searches for a separate issue, so we do not count them as new findings. The audit's one
+genuinely new result is that the embedding's scale normalization is computed over the full
+series rather than causally. We disclose it here and show it does not materially affect the
+result (Brent: +2.4pp moves to -0.1pp under a corrected causal-scale variant, both
+non-significant; S&P 500: -1.2pp stays at -1.2pp).
 
 ## 6. Results After Correction
 
-**Table 1. Diffusion-ELBO accuracy gap, corrected pipeline, by asset.**
+**Table 2. Accuracy gap by detector and asset, corrected pipeline (percentage points;
+p-values from a 2000-resample permutation test).**
 
-| Asset | Accuracy gap | $p$-value |
-|---|---|---|
-| Brent | +2.4pp | 0.176 |
-| S&P 500 | -1.2pp | 0.692 |
-| Gold | -5.4pp | 0.985 |
-| Bitcoin | -1.7pp | 0.720 |
-| Ethereum | +1.2pp | 0.352 |
+| Asset | Diffusion | Isolation Forest | LOF | Mahalanobis-PCA |
+|---|---|---|---|---|
+| Brent | +2.6, p=0.165 | +1.8, p=0.252 | +0.2, p=0.477 | +0.7, p=0.398 |
+| S&P 500 | -1.2, p=0.692 | -0.6, p=0.605 | -1.6, p=0.747 | -1.1, p=0.677 |
+| Gold | -5.4, p=0.985 | +0.9, p=0.346 | -0.5, p=0.583 | -1.0, p=0.640 |
+| Bitcoin | -1.7, p=0.720 | +0.6, p=0.422 | -2.9, p=0.823 | -1.4, p=0.689 |
+| Ethereum | +1.2, p=0.352 | +3.6, p=0.135 | +1.1, p=0.372 | +6.2, p=0.025 |
+| Silver | +1.4, p=0.302 | -2.0, p=0.802 | -1.8, p=0.774 | -1.8, p=0.762 |
+| WTI Crude | -1.0, p=0.654 | -0.3, p=0.551 | -0.2, p=0.518 | -0.1, p=0.516 |
 
-No accuracy gap reaches significance, and several point estimates are negative. Extending the
-comparison to all four detectors across the full seven-asset panel, 28 tests in total, finds
-exactly 1 of 28 cells below $p=0.05$ (Ethereum/Mahalanobis-PCA, $p=0.025$), which is
-indistinguishable from the roughly 1.4 false positives expected by chance alone at
-$\alpha=0.05$ across 28 independent tests (the full table is reported as Finding 53 in the
-accompanying repository).
+No cell in Table 2 that was significant in Table 1 remains so after the fix, and several
+point estimates change sign. Across all 28 detector-asset cells, exactly 1 falls below p=0.05
+(Ethereum/Mahalanobis-PCA, p=0.025). Because the four detectors share the same underlying
+embedding and the seven assets are not independent of one another, these 28 tests are
+correlated rather than independent, so we do not report a formal expected false-positive
+count; qualitatively, one marginal cell out of 28 against a nominal 5% threshold is consistent
+with chance and does not, on its own, constitute evidence of a surviving effect.
 
 The genuine single-shot holdout test, re-run with the corrected pipeline, tells the same story
 at the panel level. Every asset is individually non-significant, and Fisher's combined
@@ -329,8 +411,8 @@ did.
 We recommend that any study pairing delay embedding with an auxiliary detection score for
 financial, or other, time-series forecasting run two checks before reporting a positive
 result. The first is a null-data control: apply the identical pipeline to synthetic data with
-provably zero real structure, i.i.d. noise matching the real series' scale is sufficient, and
-confirm that the reported effect does not appear. The second is a surrogate-data control:
+provably zero real structure (i.i.d. noise matched to the real series' scale is sufficient),
+and confirm that the reported effect does not appear. The second is a surrogate-data control:
 apply the identical pipeline to AAFT, or comparable, surrogates of the real series, to separate
 genuine structure from an artifact that matched linear noise can reproduce on its own. Both
 checks are inexpensive relative to the modeling effort typically invested in this class of
@@ -339,12 +421,12 @@ months.
 
 ### 7.3 Limitations
 This paper documents one specific error in one specific implementation of a standard method
-family. We are not claiming the error is present in any other published study; we are claiming
-that the general class of convention it belongs to — using the embedding's most-recent-return
-component without an explicit, verified alignment check against the forecast target's own
-starting index — carries this risk, and that the diagnostic protocol we propose is a cheap,
-general-purpose safeguard whether or not any specific paper happens to contain this exact
-error.
+family. We are not claiming the error is present in any other published study; we are
+claiming that the general class of convention it belongs to — using the embedding's
+most-recent-return component without an explicit, verified alignment check against the
+forecast target's own starting index — carries this risk, and that the diagnostic protocol we
+propose is a cheap, general-purpose safeguard whether or not any specific paper happens to
+contain this exact error.
 
 ## 8. Conclusion
 
@@ -357,14 +439,41 @@ increasing levels of pipeline complexity and show that the corrected pipeline re
 power to detect genuine designed-in signal, which rules out the possibility that the
 correction simply broke the method. We offer the diagnostic protocol that exposed the error, a
 null-noise control paired with a surrogate-data test, both standard tools in adjacent
-literatures but, to our knowledge, not yet standard practice in this specific subfield, as
-this paper's main contribution.
+literatures but, to our knowledge, not yet standard practice in delay-embedding-based
+financial forecasting, as this paper's main contribution.
+
+## Data and Code Availability
+
+All code needed to reproduce every result in this paper, including the original (uncorrected)
+pipeline, the fix, and all six verification checks in Section 5, is available at
+[github.com/Ramin-Buzarpur/Paper](https://github.com/Ramin-Buzarpur/Paper) (subdirectory
+`finsler_forecast`). The repository's `README.md` documents each result under a numbered
+heading and cross-references the script that produced it; `REPRODUCING.md` gives step-by-step
+instructions, including package versions and expected runtimes. All price data is downloaded
+at run time from Yahoo Finance and is not redistributed in the repository. A permanent,
+versioned archive (for example via Zenodo, with a DOI) will be created at the time of
+submission.
+
+## CRediT Authorship Contribution Statement
+
+**Ramin Buzarpur**: Conceptualization, Software, Methodology, Formal analysis, Investigation,
+Data curation, Writing — original draft. **Armin Buzarpur**: Methodology, Formal analysis
+(dynamical-systems and control-theoretic framing), Validation, Writing — review & editing.
+
+## Declaration of Competing Interest
+
+The authors declare that they have no known competing financial interests or personal
+relationships that could have appeared to influence the work reported in this paper.
+
+## Funding
+
+This research received no specific grant from any funding agency in the public, commercial,
+or not-for-profit sectors.
 
 ## References
 
 Alessandrini, S., Delle Monache, L., Sperati, S., & Nissen, J. (2015). A novel application of
 an analog ensemble for short-term wind power forecasting. *Renewable Energy*, 76, 768-781.
-https://doi.org/10.1016/j.renene.2014.11.061
 
 Bailey, D. H., Borwein, J. M., López de Prado, M., & Zhu, Q. J. (2014). Pseudo-mathematics and
 financial charlatanism: The effects of backtest overfitting on out-of-sample performance.
@@ -372,6 +481,10 @@ financial charlatanism: The effects of backtest overfitting on out-of-sample per
 
 Barnett, W. A., & Serletis, A. (2000). Martingales, nonlinearity, and chaos. *Journal of
 Economic Dynamics and Control*, 24(5-7), 703-724.
+
+Breunig, M. M., Kriegel, H.-P., Ng, R. T., & Sander, J. (2000). LOF: Identifying density-based
+local outliers. In *Proceedings of the 2000 ACM SIGMOD International Conference on Management
+of Data* (pp. 93-104).
 
 Coqueret, G. (2024). Forking paths in financial economics. *arXiv preprint* arXiv:2401.08606.
 
@@ -381,33 +494,47 @@ schemes to post-process numerical weather predictions. *Monthly Weather Review*,
 
 Delle Monache, L., Eckel, F. A., Rife, D. L., Nagarajan, B., & Searight, K. (2013).
 Probabilistic weather prediction with an analog ensemble. *Monthly Weather Review*, 141,
-3498-3516. https://doi.org/10.1175/MWR-D-12-00281.1
+3498-3516.
 
 Gelman, A., & Loken, E. (2013). The garden of forking paths: Why multiple comparisons can be a
 problem, even when there is no "fishing expedition" or "p-hacking" and the research hypothesis
-was posited ahead of time. Department of Statistics, Columbia University (working paper);
-published in revised form as "The Statistical Crisis in Science," *American Scientist*, 102(6),
-460 (2014).
+was posited ahead of time. Department of Statistics, Columbia University, working paper.
 
 Good, P. I. (2005). *Permutation, Parametric, and Bootstrap Tests of Hypotheses* (3rd ed.).
 Springer Series in Statistics. Springer-Verlag.
 
 Hamill, T. M., & Whitaker, J. S. (2006). Probabilistic quantitative precipitation forecasts
 based on reforecast analogs: Theory and application. *Monthly Weather Review*, 134(11),
-3209-3229. https://doi.org/10.1175/MWR3237.1
+3209-3229.
 
 Harvey, C. R., Liu, Y., & Zhu, H. (2016). ...and the cross-section of expected returns.
 *Review of Financial Studies*, 29(1), 5-68.
 
+Ho, J., Jain, A., & Abbeel, P. (2020). Denoising diffusion probabilistic models. *Advances in
+Neural Information Processing Systems*, 33, 6840-6851.
+
 Hou, K., Xue, C., & Zhang, L. (2020). Replicating anomalies. *Review of Financial Studies*,
 33(5), 2019-2133.
+
+Inglada-Pérez, L. (2020). A comprehensive framework for uncovering non-linearity and chaos in
+financial markets: Empirical evidence for four major stock market indices. *Entropy*, 22(12),
+1435.
 
 Kantz, H., & Schreiber, T. (2004). *Nonlinear Time Series Analysis* (2nd ed.). Cambridge
 University Press.
 
+Kapoor, S., & Narayanan, A. (2023). Leakage and the reproducibility crisis in
+machine-learning-based science. *Patterns*, 4(9), 100804.
+
 Kaufman, S., Rosset, S., Perlich, C., & Stitelman, O. (2012). Leakage in data mining:
 Formulation, detection, and avoidance. *ACM Transactions on Knowledge Discovery from Data*,
-6(4), Article 15. https://doi.org/10.1145/2382577.2382579
+6(4), Article 15.
+
+Ledoit, O., & Wolf, M. (2004). A well-conditioned estimator for large-dimensional covariance
+matrices. *Journal of Multivariate Analysis*, 88(2), 365-411.
+
+Liu, F. T., Ting, K. M., & Zhou, Z.-H. (2008). Isolation forest. In *2008 Eighth IEEE
+International Conference on Data Mining* (pp. 413-422).
 
 Nikolopoulos, S. D. (2026). Spurious predictability in financial machine learning. *arXiv
 preprint* arXiv:2604.15531.
@@ -426,21 +553,38 @@ time-series data. *Physical Review A*, 34(3), 2427.
 Theiler, J., Galdrikian, B., Longtin, A., Eubank, S., & Farmer, J. D. (1992). Testing for
 nonlinearity in time series: The method of surrogate data. *Physica D*, 58, 77-94.
 
+Vogl, M., & Roetzel, P. G. (2022). Chaoticity versus stochasticity in financial markets: Are
+daily S&P 500 return dynamics chaotic? *Communications in Nonlinear Science and Numerical
+Simulation*, 108, 106218.
+
 White, H. (2000). A reality check for data snooping. *Econometrica*, 68(5), 1097-1126.
 
 ---
-*Internal note (2026-11-06): author names added (Ramin Buzarpur, Armin Buzarpur; emails and
-affiliations pending). The decomposition-leakage cryptocurrency preprint was removed from
-Related Work and the reference list after its author could not be independently verified —
-Nikolopoulos (2026) and Kaufman et al. (2012) already cover the same point adequately, so
-nothing was lost by dropping it. Two new, verified references (Harvey, Liu & Zhu, 2016; Hou,
-Xue & Zhang, 2020) were added to the Introduction to situate the paper's finding within the
-broader replication-crisis literature in empirical finance, and one (Bailey, Borwein, López de
-Prado & Zhu, 2014) was added to Section 7.1; all three were checked against primary sources
-before use. A full prose pass removed nearly all rhetorical em-dashes (kept only for genuine
-numeric ranges, matching standard journal style) and the "First/Second/Third" enumeration
-pattern in Section 7.1, after reading the opening sections of two closely related published
-papers (Nikolopoulos, 2026; Bailey et al., 2014) to calibrate register and structure. LaTeX
-formatting issues (two overfull hboxes causing visible margin overflow) were found and fixed
-in paper.tex. Cross-references (Section~\ref, Table~\ref) were checked and resolve correctly
-with no LaTeX warnings as of this revision.*
+*Internal note (2026-11-06, second review pass): this file was fully regenerated to match
+paper.tex after a thorough reviewer pass found several real issues now fixed: a genuine
+table-label collision (the pre-fix 4-detector x 7-asset table and the post-fix table had been
+conflated under one label/caption — now two separate, complete tables); the Lyapunov
+explanation's fate after the index fix was actually re-run rather than left unstated (Section
+4.5 — it survived the fix unchanged, because the LLE code never used the buggy index, but
+remains explained as an artifact by the independent surrogate-data test); Fisher's-method
+independence assumption is now disclosed explicitly in Section 3.4; the "~1.4 expected false
+positives" claim was removed since the 28 tests are not independent; the median-split
+causality is now stated explicitly (computed from strictly prior folds, confirmed against the
+actual `statistical_rigor.py` code); full hyperparameters were added for reproducibility
+(diffusion architecture/training, Isolation Forest, LOF, PCA, walk-forward window); references
+were added for Isolation Forest, LOF, Ledoit-Wolf shrinkage, the diffusion model architecture,
+and Kapoor & Narayanan (2023) on ML reproducibility more broadly; the CPCV claim in the
+Introduction was removed since combinatorial purged cross-validation was not actually run on
+this specific claim; the "first to apply AnEn to finance" claim was hedged; AAFT's
+approximate (not exact) spectral matching is now stated accurately, alongside why AAFT was
+chosen over IAAFT; the "zero gap" wording was rewritten to avoid a real ambiguity a careful
+reader flagged; the six-point leakage audit's description now makes clear that two of its six
+checks were re-verifications of the main bug, not new findings; Data and Code Availability,
+CRediT, Declaration of Competing Interest, and Funding sections were added, with a real,
+working repository URL; the abstract was trimmed to approximately 155-160 words to fit IJF's
+guideline; internal "Finding N" numbering (an artifact of this project's research-log
+conventions) was removed throughout and replaced with plain section/table references, per
+explicit request. Still open before submission: author affiliations, institutional emails, and
+a corresponding author designation (none of these can be filled in without information from
+the authors); a permanent archived copy of the code repository (e.g. via Zenodo) at submission
+time.*

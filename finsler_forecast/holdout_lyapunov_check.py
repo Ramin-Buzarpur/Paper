@@ -49,7 +49,7 @@ def main():
         price_df_full = download_max(ticker, max_years)
         n_total = len(price_df_full)
         cutoff = int(n_total * 0.8)
-        holdout_mask = df["origin_idx"] >= cutoff - (M - 1) * TAU
+        holdout_mask = df["origin_idx"] >= cutoff - M * TAU
         train_df, holdout_df = df[~holdout_mask], df[holdout_mask].copy()
         if len(holdout_df) < 30 or len(train_df) < 30:
             print(f"  {name}: skipped (too few held-out/training folds)")

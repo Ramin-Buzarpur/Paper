@@ -1611,6 +1611,32 @@ to affect the finding; no other leakage was found. This is the appropriate basis
 in any write-up, that the pipeline was systematically audited beyond the single bug that
 motivated the audit — not merely that one bug was found and fixed without further checking.
 
+**Finding 55 — the Lyapunov-exponent gap (finding 41) was never touched by the indexing bug
+(finding 51), and re-running it post-fix confirms this directly rather than assuming it.** The
+local-Lyapunov-exponent calculation uses the origin index and a forward offset directly; it
+never reads the mis-specified `p` at all. Re-running `local_lyapunov_regime.py` against the
+now-fixed `collect_full` on all 7 assets:
+
+| asset | LLE gap, pre-fix | LLE gap, post-fix |
+|---|---|---|
+| Brent | -0.166 | -0.1658 |
+| S&P 500 | -0.148 | -0.1477 |
+| Gold | -0.190 | -0.1903 |
+| Bitcoin | -0.206 | -0.2163 |
+| Ethereum | -0.203 | -0.1793 |
+| Silver | -0.212 | -0.2122 |
+| WTI Crude | -0.182 | -0.1816 |
+
+Essentially unchanged on 5 of 7 assets; Bitcoin and Ethereum shift modestly (attributed to
+updated price history between runs and shifted fold boundaries near the end of these two
+shorter series), but all 7 remain significant at p<0.001 in both runs. **This means the index
+fix does not explain away the Lyapunov result — but finding 49's surrogate-data test already
+did, by a different route**, showing the same gap is reproduced (and exceeded) by linear AAFT
+surrogates. The accuracy-gap claim (finding 51) and the Lyapunov explanation (finding 49) are
+two independent problems with two independent diagnoses, not one shared cause: conflating them
+(e.g. concluding the index fix also explains away Lyapunov, or that Lyapunov's survival means
+the index fix was incomplete) would be incorrect in both directions.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
