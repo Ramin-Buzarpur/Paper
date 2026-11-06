@@ -17,7 +17,7 @@
 
 \begin{frontmatter}
 
-\title{Spurious Predictability from an Embedding Index Error: A Case Study in Financial Analog Forecasting}
+\title{Spurious Predictability Under Anomaly Conditioning: How a Structural Embedding Leak Survives Walk-Forward Validation}
 
 \author[a1]{Ramin Buzarpur}
 \author[a2]{Armin Buzarpur}
@@ -31,7 +31,9 @@ classes, we initially found forecast accuracy substantially higher on days flagg
 atypical, surviving walk-forward cross-validation, permutation testing, and a genuine
 out-of-sample holdout. The result was an artifact of a one-step index error: the embedding's
 most recent component was numerically identical to the first step of the future return being
-predicted. We confirm this diagnosis algebraically, across many origins in the real data, with
+predicted. We show analytically why this leak concentrates on exactly the days the
+anomaly-conditioning step flags as atypical, turning a small index error into a large,
+regime-specific illusion of predictability. We confirm this diagnosis algebraically, across many origins in the real data, with
 a pipeline-free correlation test, a null control on synthetic white noise, an independent
 from-scratch re-implementation, and a power test showing the corrected pipeline still detects
 genuine signal. All four detectors were affected identically,
@@ -88,9 +90,15 @@ is worth documenting in detail.
 
 \subsection{Contributions}
 
-We document a previously unreported class of index error in delay-embedding-based forecasting
-pipelines, under which the embedding's most recent feature is numerically identical to part of
-the forecast target, and we show that it survives methods normally considered strong
+Off-by-one and look-ahead errors are a long-recognized hazard in time-series pipelines on their
+own; our contribution is not the existence of such an error but the specific mechanism by which
+it interacts with anomaly conditioning. We show, both empirically and analytically, that a
+one-step index error in a delay-embedding pipeline, one that by itself would produce only a
+small, roughly uniform accuracy inflation, is mechanically amplified by exactly the kind of
+unsupervised novelty or anomaly-detection conditioning this literature uses to isolate
+``interesting'' forecasting regimes, because the detector's atypicality score and the leaked
+component of the target are driven by the same underlying quantity. The result is a large,
+regime-concentrated illusion of predictability that survives methods normally considered strong
 safeguards against overfitting: walk-forward cross-validation, permutation testing, and a
 genuine out-of-sample holdout. We verify this diagnosis through six checks of increasing
 pipeline complexity, ranging from a closed-form algebraic proof to a null-hypothesis control on
@@ -362,10 +370,56 @@ label were, in other words, driven by the same quantity, which is why conditioni
 atypicality looked like it was isolating a genuinely more forecastable regime rather than simply
 isolating the origins where the leak itself was largest.
 
+This can be made precise under a simple idealization. Model returns as i.i.d.\ Gaussian,
+$r_t \sim \mathcal{N}(0,\sigma^2)$, and write the leaked target as $y_p = r_p + R_{+}$, where
+$r_p$ is the leaked component and $R_{+} = \sum_{h=1}^{H-1} r_{p+h} \sim
+\mathcal{N}(0,(H-1)\sigma^2)$ is independent of $r_p$. Since $(r_p, y_p)$ are jointly Gaussian
+with correlation $\rho = \mathrm{Cov}(r_p,y_p)/\sqrt{\mathrm{Var}(r_p)\mathrm{Var}(y_p)} =
+1/\sqrt{H}$, a standard identity for bivariate Gaussians gives
+\begin{equation}
+\mathbb{P}\bigl(\operatorname{sign}(r_p) = \operatorname{sign}(y_p)\bigr)
+= \frac{1}{2} + \frac{1}{\pi}\arcsin\!\left(\frac{1}{\sqrt{H}}\right).
+\end{equation}
+For $H=3$, this evaluates to $\approx 69.6\%$, close to the $68.3\%$ unconditional sign-agreement
+rate measured directly on real Brent data in check~3 of Section~5; the small gap is consistent
+with real returns not being exactly i.i.d.\ Gaussian. This is the unconditional rate, over all
+origins. Conditional on the leaked return's magnitude, $|r_p|=c$, the same Gaussian calculation
+gives $\mathbb{P}(\operatorname{sign}(r_p)=\operatorname{sign}(y_p) \mid |r_p|=c) =
+\Phi(c/(\sigma\sqrt{H-1}))$, which is monotonically increasing in $c$ and tends to 1 as $c$
+grows; since all four detectors assign higher atypicality scores to embeddings with larger
+Euclidean norm, and $|r_p|$ is the dominant term in that norm, conditioning on high atypicality
+is, under this idealization, equivalent to conditioning on large $c$, which pushes the
+sign-agreement probability above the unconditional baseline computed above. This is the formal
+counterpart of the qualitative mechanism described above, not a claim that real returns are
+Gaussian; it is offered to show that the regime-concentration effect follows from the leak's
+definition alone, without appeal to any genuine market structure.
+
+One link remains to close: the pipeline's forecast is not $\operatorname{sign}(r_p)$ directly,
+but the sign of the mean $H$-day return realized by the $K=7$ historical analogs nearest to the
+current embedding. The same index convention, however, applies identically to every historical
+origin, not only the current one, so each candidate analog's own embedding carries its own
+leaked return, and each analog's own realized target begins with that same leaked return. An
+analog selected because its embedding is close to the current one is, for that reason, also
+likely to have a leaked return of similar sign and comparable magnitude to $r_p$; the analogs'
+averaged realized target therefore tends to carry the same sign as $r_p$ as well, for the same
+reason the current origin's own target does. This holds whether the nearest analogs are
+selected by raw embedding distance or, as in our pipeline, by distance in the diffusion model's
+hidden-layer feature space (Section~3.3), since that representation is trained to reconstruct
+the embedding and so preserves its leaked component's sign to a close approximation. The leak
+therefore reaches the final forecast through the analog average, not only through the current
+origin's own embedding.
+
 \subsection{The fate of the Lyapunov explanation}
 \label{sec:lyapunov-fate}
 We now ask whether the dynamical-systems explanation (Section~4.1) is a second casualty of the
-same indexing error, or a separate problem. It is the latter. The local-Lyapunov-exponent calculation uses the origin index $j$ and a forward
+same indexing error, or a separate problem. It is the latter. Local Lyapunov exponents were
+estimated, for each origin $j$ with causal nearest neighbor $k$ (excluding the Theiler window)
+and a forward horizon $\Delta t$ equal to the forecast horizon $H$, as the log-rate of
+divergence of the two trajectories, $\lambda_j = \frac{1}{\Delta t}
+\log\bigl(\lVert x_{j+\Delta t} - x_{k+\Delta t}\rVert / \lVert x_j - x_k\rVert\bigr)$, with
+more negative values indicating faster local contraction (greater short-run predictability
+under the dynamical-systems reading) and values near zero or positive indicating local
+divergence. The local-Lyapunov-exponent calculation uses the origin index $j$ and a forward
 offset directly; it never reads the mis-specified index $p$ at all, so it was never affected
 by the bug in the first place. Re-running it against the corrected pipeline's atypicality
 scores confirms this directly: the atypical-versus-typical gap in local Lyapunov exponents is
@@ -498,6 +552,41 @@ pipeline's $p = 3.8\times 10^{-5}$ on the identical protocol. The strongest-look
 the original investigation collapses, once the leak is removed, to a result indistinguishable
 from chance.
 
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[font=\footnotesize, x=1cm, y=1cm]
+\def\barw{1.6}
+\def\scl{0.35}
+
+\draw[fill=red!25, draw=red!60!black] (0,0) rectangle (\barw, 8.3*\scl);
+\node at (\barw/2, 8.3*\scl+0.25) {8.3 pp};
+\node[align=center, text width=2.1cm] at (\barw/2,-1.1) {Real data, uncorrected (Brent, diffusion)};
+
+\draw[fill=orange!25, draw=orange!80!black] (2.1,0) rectangle (2.1+\barw, 6.0*\scl);
+\node at (2.1+\barw/2, 6.0*\scl+0.25) {6.0 pp};
+\node[align=center, text width=2.1cm] at (2.1+\barw/2,-1.1) {White noise, uncorrected (pooled range 5--7)};
+
+\draw[fill=blue!25, draw=blue!50!black] (4.2,0) rectangle (4.2+\barw, 2.6*\scl);
+\node at (4.2+\barw/2, 2.6*\scl+0.25) {2.6 pp};
+\node[align=center, text width=2.1cm] at (4.2+\barw/2,-1.1) {Real data, corrected (Brent, diffusion)};
+
+\draw[fill=green!25, draw=green!40!black] (6.3,0) rectangle (6.3+\barw, 6.0*\scl);
+\node at (6.3+\barw/2, 6.0*\scl+0.25) {6.0 pp};
+\node[align=center, text width=2.1cm] at (6.3+\barw/2,-1.1) {Synthetic signal, corrected (power test, check~6)};
+
+\draw[-{Stealth[length=2mm]}] (-0.3,0) -- (-0.3,3.8);
+\node[rotate=90] at (-0.9,1.9) {Accuracy gap (pp)};
+\draw[dashed, gray] (-0.3,0) -- (8.6,0);
+\end{tikzpicture}
+\caption{Accuracy gap across four regimes, each number taken directly from a result already
+reported in the text: the uncorrected pipeline shows a large gap on real data that a pure-noise
+null control (no genuine structure by construction) already reproduces at comparable size; the
+corrected pipeline's gap on real data collapses toward zero, while its gap on a synthetic series
+with a designed-in signal remains intact, confirming the fix removed the artifact without
+destroying the method's ability to detect genuine structure.}
+\label{fig:barchart}
+\end{figure}
+
 \section{Discussion}
 
 \subsection{Why this is worth publishing}
@@ -622,9 +711,9 @@ and take full responsibility for the content of the publication.
 
 \bibitem[Liu et al., 2008]{liu2008} Liu, F. T., Ting, K. M., \& Zhou, Z.-H. (2008). Isolation forest. In \emph{2008 Eighth IEEE International Conference on Data Mining} (pp. 413--422).
 
-\bibitem[Petropoulos et al., 2022]{petropoulos2022} Petropoulos, F., Apiletti, D., Assimakopoulos, V., Babai, M. Z., Barrow, D. K., Ben Taieb, S., et al. (2022). Forecasting: Theory and practice. \emph{International Journal of Forecasting}, 38(3), 705--871.
-
 \bibitem[Nikolopoulos, 2026]{nikolopoulos2026} Nikolopoulos, S. D. (2026). Spurious predictability in financial machine learning. \emph{arXiv preprint} arXiv:2604.15531.
+
+\bibitem[Petropoulos et al., 2022]{petropoulos2022} Petropoulos, F., Apiletti, D., Assimakopoulos, V., Babai, M. Z., Barrow, D. K., Ben Taieb, S., et al. (2022). Forecasting: Theory and practice. \emph{International Journal of Forecasting}, 38(3), 705--871.
 
 \bibitem[Schreiber and Schmitz, 1996]{schreiber1996} Schreiber, T., \& Schmitz, A. (1996). Improved surrogate data for nonlinearity tests. \emph{Physical Review Letters}, 77, 635--638.
 
