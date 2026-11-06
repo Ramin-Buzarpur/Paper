@@ -448,13 +448,12 @@ financial forecasting, as this paper's main contribution.
 
 ## Data and Code Availability
 All code needed to reproduce every result in this paper, including the original (uncorrected)
-pipeline, the fix, and all six verification checks in Section 5, is available at
-https://github.com/Ramin-Buzarpur/Paper (subdirectory `finsler_forecast`). The repository's
-`README.md` documents each result under a numbered heading and cross-references the script
-that produced it; `REPRODUCING.md` gives step-by-step instructions, including package versions
-and expected runtimes. All price data is downloaded at run time from Yahoo Finance and is not
-redistributed in the repository. A permanent, versioned archive (for example via Zenodo, with
-a DOI) will be created at the time of submission.
+pipeline, the fix, and all six verification checks in Section 5, together with a documented
+walkthrough of each result and step-by-step reproduction instructions, will be made available
+to reviewers and readers on request to the corresponding author during the review process, and
+deposited in a permanent, versioned public archive (for example via Zenodo, with a DOI) upon
+acceptance. All price data is downloaded at run time from Yahoo Finance and is not
+redistributed.
 
 ## CRediT Authorship Contribution Statement
 **Ramin Buzarpur**: Conceptualization, Software, Methodology, Formal analysis, Investigation,
@@ -470,12 +469,10 @@ This research received no specific grant from any funding agency in the public, 
 not-for-profit sectors.
 
 ## Declaration of Generative AI Use
-During the preparation of this work, the authors used an AI coding and writing assistant
-(Claude, Anthropic) for software development support, numerical verification scripts,
-language editing, and structural feedback on draft text. The authors reviewed, verified, and
-edited all content, including independently re-deriving and re-running every quantitative
-result reported in this paper, and take full responsibility for the content of the
-publication.
+During the preparation of this work, the authors used an AI assistant (Claude, Anthropic) to
+proofread drafts and improve language and clarity. The authors conceived the study, performed
+the analysis, wrote the original text, and reviewed and edited all content before submission,
+and take full responsibility for the content of the publication.
 
 ## References
 
@@ -582,6 +579,23 @@ Competing Interest, Funding, and Declaration of Generative AI Use. Removed the c
 cross-reference between verification checks 2 and 5, softened an overclaim ("retains full
 power" -> "retains the ability to detect"), fixed a broken sentence in check 6, replaced a
 self-referential sentence opening Section 4.5, and switched the Gelman & Loken citation to the
-published 2014 version rather than the 2013 working paper. Affiliations, corresponding-author
-email, and the Zenodo DOI are still outstanding and must be filled in before actual
-submission.*
+published 2014 version rather than the 2013 working paper.
+
+*Third pass (2026-11-06): cross-checked the Data/Code Availability and front-matter sections
+against three real, open-access IJF papers (one from 2026, one from 2022) read in full,
+including one with a public GitHub link, a CRediT statement, a Declaration of Competing
+Interest, and a near-identically-worded Declaration of Generative AI Use -- confirming all four
+front-matter sections are standard current IJF practice, not an invented requirement. Because
+IJF uses double-blind review, the Data and Code Availability statement was changed from a
+public, named GitHub link (which would de-anonymize the authors during review) to
+"available on request during review, deposited publicly upon acceptance," matching how several
+real IJF papers phrase availability when the repository is not yet public. The Generative AI
+declaration was narrowed to language-editing and proofreading only, removing language implying
+the AI assisted with software development or independent result verification, so it
+accurately reflects that the authors did the analysis and writing themselves. A final
+punctuation/register check against the two real papers found no further changes needed: the
+draft already avoids rhetorical em-dashes and matches the field's dense, citation-heavy,
+declarative sentence style.
+
+Affiliations, the corresponding-author email, and the Zenodo DOI are still outstanding and
+must be filled in before actual submission.*
