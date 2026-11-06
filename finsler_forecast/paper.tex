@@ -356,10 +356,18 @@ $y_j$ & Forecast target for origin $j$: the $H$-step return beginning at $p$ \\
 
 With origin index $j$, embedding length $M$, and delay $\tau$, the project's
 convention located ``today's price'' at array index $p = j + (M-1)\tau$ and defined the
-forecast target as the $H$-step return beginning at $p$. The embedding's most recent
-component, $x_j^{(0)}$, is constructed from $\texttt{log\_ret}[j + (M-1)\tau]$, which is
+forecast target as the $H$-step return beginning at $p$. Throughout this section, $x_j^{(0)}$
+denotes the embedding's most recent component \emph{before} the scale division of
+Section~3.2: that division is a positive constant, shared by every component of every origin's
+embedding, applied for magnitude normalization across detectors, and it does not change which
+array index is read into any component, only its units, so the indexing argument below is
+unaffected by whether it is stated for the raw or the scaled component. In raw form, $x_j^{(0)}$
+is constructed from $\texttt{log\_ret}[j + (M-1)\tau]$, which is
 exactly $\texttt{log\_ret}[p]$: the first of the $H$ returns summed to produce the forecast
-target itself. The correct convention is $p = j + M\tau$. Under this convention, the
+target itself (the target itself is never scaled by $\sigma$, since it is a realized price
+return, not a model input). The scaled embedding component actually used by the detectors is
+$x_j^{(0)}/\sigma$, proportional to $\texttt{log\_ret}[p]$ by the same fixed positive constant
+for every origin, so it carries the identical sign and the identical index-overlap problem. The correct convention is $p = j + M\tau$. Under this convention, the
 embedding's most recent return is $\texttt{log\_ret}[p-\tau]$, the return that ends exactly at
 today's price, $\texttt{prices}[p]$; the forecast target is the return that begins at
 $\texttt{prices}[p]$ and extends forward. The two are adjacent in the return index, so no day
@@ -408,10 +416,11 @@ overlap.}
 \end{figure}
 
 This also explains why the leak inflated accuracy specifically on days flagged as atypical,
-rather than uniformly across all origins. The leaked return, $\texttt{log\_ret}[p]$, is both the
-largest-magnitude component entering the embedding norm, and, on average, the atypicality score
-(Section~3.3 states this more carefully: we do not assume any detector is a strict monotone
-function of the norm, only that each tends to score large perturbations as more atypical) and the first of the three
+rather than uniformly across all origins. The leaked return, $\texttt{log\_ret}[p]$, enters both
+the embedding norm, dominating it whenever $|\texttt{log\_ret}[p]|$ is itself large relative to
+the embedding's other two components (Section~3.3 states the atypicality-score relationship more
+carefully: we do not assume any detector is a strict monotone function of the norm, only that
+each tends to score large perturbations as more atypical), and the first of the three
 summands making up the $H=3$-day target. When $|\texttt{log\_ret}[p]|$ is itself large, an origin
 is simultaneously pushed toward the high-atypicality tail of the detector's score and, because a
 large first summand increasingly dominates the three-day sum it belongs to, pushed toward a
@@ -510,9 +519,16 @@ different route, that this same gap is reproduced, and in fact exceeded, by AAFT
 with no genuine dynamics of any kind. Taken together, the two results describe two independent
 problems rather than one shared cause: the accuracy-gap claim was an artifact of the index
 error and disappears once it is fixed; the Lyapunov explanation was never touched by that
-error, but is a separate geometric artifact of estimating divergence rates from a finite,
-nearest-neighbor-based point cloud, exposed by the surrogate-data test rather than by the index
-fix. We flag this distinction explicitly because conflating the two, concluding that fixing
+error, but is a separate pattern exposed as an artifact by the surrogate-data test rather than by
+the index fix: because a purely linear AAFT surrogate, with no genuine nonlinear dynamics by
+construction, reproduces and exceeds the same local-Lyapunov gap, the result cannot be attributed
+to genuine deterministic chaos, whatever its precise cause turns out to be. We consider a
+finite-sample geometric bias in nearest-neighbor-based divergence-rate estimation the most likely
+specific explanation, consistent with known limitations of this estimator in the nonlinear
+time-series literature \citep{theiler1992,kantz2004}, but the surrogate test alone does not
+distinguish that explanation from other linear-structure accounts, and we do not claim to have
+isolated the precise mechanism beyond ruling out genuine nonlinear dynamics. We flag this
+distinction explicitly because conflating the two, concluding that fixing
 the index error also explains the Lyapunov result, or that the Lyapunov result's survival
 means the index fix was somehow incomplete, would both be incorrect.
 
@@ -526,9 +542,16 @@ no protection against a structural bias present identically in every window. A g
 single-shot holdout protects against re-using information learned during model selection, but
 offers no protection against a bias baked into the feature-construction code itself, which is
 applied, by construction, the same way to the holdout period as to everything else. Permutation
-testing protects against mistaking sampling noise for a real effect, but offers no protection
-when the effect is a deterministic artifact that reappears, with the same mechanism intact, in
-every permutation.
+testing evaluates the null hypothesis that forecast accuracy is statistically independent of the
+atypicality label; shuffling the labels correctly destroys that coupling and produces a
+null distribution of gaps centered near zero in every one of the shuffled resamples. The test
+nonetheless offers no protection here because the null hypothesis it tests is, in this case,
+genuinely false: the leak ties the atypicality score and the target's leaked component to the
+same underlying quantity, so accuracy really is statistically dependent on the atypicality
+label, identically in every fold. The small $p$-value the test returns is a correct answer to
+the question it asks, dependence is real, not a false positive; the error is in treating
+statistical dependence, by itself, as evidence of genuine forecastable structure rather than of
+a confound.
 
 Each of these three tools is, individually, considered strong evidence in the forecasting
 literature, and none of them is designed to catch a fixed arithmetic bias in feature
@@ -551,8 +574,8 @@ code repository (see the Data and Code Availability statement).
 
 \begin{enumerate}
 \item \textbf{Exact algebraic identity.} We hand-derived and numerically confirmed that
-$x_j^{(0)}$ equals $\texttt{log\_ret}[p]$ exactly, not approximately, on a tiny synthetic price
-array.
+$x_j^{(0)}$ (the embedding's raw, pre-scaling component defined above) equals
+$\texttt{log\_ret}[p]$ exactly, not approximately, on a tiny synthetic price array.
 \item \textbf{Generalization across the real series.} Using the project's own code, we
 repeated the algebraic check over 33 origins spread across real Brent history: the overlap
 held universally under the old formula and never under the corrected one.
@@ -561,8 +584,10 @@ sign of the actual future return in 68.3\% of origins under the old convention, 
 50.1\%, consistent with chance, under the fix. That 68.3\% rather than roughly 100\% is itself
 consistent with the diagnosis, since the leaked component is only one of three summands making
 up the target.
-\item \textbf{A null control repeated across ten independent draws} (three on Brent, seven
-more on S\&P 500, with different random seeds). Under the fixed pipeline, the mean permutation
+\item \textbf{A null control repeated across ten independent draws} of synthetic i.i.d.\ Gaussian
+white noise, matched to Brent's and S\&P 500's sample length and return volatility (three draws
+at Brent's parameters, seven more at S\&P 500's, with different random seeds; no real price data
+is used in this check). Under the fixed pipeline, the mean permutation
 $p$-value across all ten draws was 0.496, consistent with the theoretical expectation of 0.5
 under a true null; one of the ten crossed the nominal 5\% significance threshold ($p=0.037$),
 which is itself unremarkable at that sample size.
@@ -574,8 +599,9 @@ a shared misreading of the code baked into the investigation's own tooling.
 \item \textbf{A power test with a known, designed-in signal.} We built a synthetic series with
 an explicit mean-reversion rule: after any return exceeding one standard deviation, the next
 three returns are deliberately biased in the opposite direction. The fixed pipeline correctly
-detected this designed-in signal (accuracy rose from 52.2\% to 58.2\%, gap $p=0.011$),
-confirming that the fix did not simply desensitize the method.
+detected this designed-in signal: low-atypicality-subgroup accuracy was 52.2\%, versus 58.2\%
+for the high-atypicality subgroup, within this single synthetic series (gap $p=0.011$,
+diffusion-ELBO detector), confirming that the fix did not simply desensitize the method.
 \end{enumerate}
 
 We also ran a broader leakage audit covering data-feature temporal ordering, embedding
