@@ -137,7 +137,11 @@ developed independently and applied to a different class of method. On the stati
 the multiplicity concerns raised by testing many model and detector variants on the same panel
 are formalized by \citet{white2000}'s Reality Check for data snooping and by the garden of
 forking paths framework of \citet{gelman2013}, applied directly to financial-anomaly research
-by \citet{coqueret2024}.
+by \citet{coqueret2024}. The community-wide review of forecasting practice by
+\citet{petropoulos2022} likewise stresses that rigorous, bias-free out-of-sample evaluation is
+the field's central methodological obligation, independent of model choice; the failure mode we
+document is one concrete way that obligation can be violated while every individual evaluation
+step still appears to have been followed correctly.
 
 \textbf{Surrogate-data testing and the chaos-in-markets debate.} The second component of our
 diagnostic protocol draws directly on the surrogate-data methodology introduced by
@@ -171,10 +175,16 @@ available history per asset (8--20 years depending on listing date).
 
 \subsection{Delay embedding and analog selection}
 Log returns $r_t = \log(P_t / P_{t-1})$ are delay-embedded into $\mathbb{R}^M$ with $M=3$,
-$\tau=1$: $x_j = (r_{t}, r_{t-\tau}, r_{t-2\tau})$. For a forecast origin, the $K=7$ nearest
+$\tau=1$. For a forecast origin with time index $t$, the embedding vector is $x_t = (r_{t},
+r_{t-\tau}, r_{t-2\tau})$; we index origins by $t$ throughout, and switch to the index $j$ only
+in Section~4.4, where $j$ denotes an origin's position in the pipeline's internal array rather
+than its calendar time, to match the pipeline's own variable names exactly where the algebra
+depends on them. For a forecast origin, the $K=7$ nearest
 historical analogs are selected causally, by Euclidean distance in the diffusion model's
-hidden-layer feature space described in Section~3.3 (not raw embedding distance), excluding a
-Theiler window of 10 days around the origin to avoid trivial temporal auto-matches
+hidden-layer feature space described in Section~3.3 (not raw embedding distance); this analog
+selection rule is held fixed across all four atypicality detectors described below, only the
+atypicality score itself varies by detector. Analog search
+excludes a Theiler window of 10 days around the origin to avoid trivial temporal auto-matches
 \citep{theiler1986}. The forecast is the sign of the mean $H=3$-day forward return realized by
 the selected analogs.
 
@@ -203,7 +213,10 @@ We use nested nonoverlapping walk-forward folds with step size $H$ over an expan
 starting at 250 observations. The accuracy-gap statistic is defined by a median split on the
 atypicality score, where the median at fold $i$ is computed causally from the atypicality
 scores of folds strictly before $i$, never from the full sample; its significance is assessed
-with a 2000-resample permutation test. We combine $p$-values across the seven-asset panel with
+with a 2000-resample permutation test, one-sided against the alternative that the gap is
+positive (high-atypicality accuracy exceeds low-atypicality accuracy), so a reported $p$ close
+to 1, as for several cells of Table~\ref{tab:postfix}, indicates a point estimate in the
+opposite direction rather than a computational error. We combine $p$-values across the seven-asset panel with
 Fisher's method, noting that this assumes independence across assets, which does not hold
 exactly for financial return series; under positive dependence, Fisher's method is
 anti-conservative (it understates the combined $p$-value), so the panel-level $p$-values we
@@ -290,6 +303,21 @@ today's price, $\texttt{prices}[p]$; the forecast target is the return that begi
 $\texttt{prices}[p]$ and extends forward. The two are adjacent in the return index, so no day
 of history is skipped, but the target return itself is entirely unrealized as of today, which
 is what the original, off-by-one convention failed to guarantee.
+
+This also explains why the leak inflated accuracy specifically on days flagged as atypical,
+rather than uniformly across all origins. The leaked return, $\texttt{log\_ret}[p]$, is both the
+largest-magnitude component entering the embedding norm (and hence the atypicality score, since
+all four detectors respond to large deviations in the embedding) and the first of the three
+summands making up the $H=3$-day target. When $|\texttt{log\_ret}[p]|$ is itself large, an origin
+is simultaneously pushed toward the high-atypicality tail of the detector's score and, because a
+large first summand increasingly dominates the three-day sum it belongs to, pushed toward a
+target whose sign agrees with the leaked return's own sign. On origins where
+$|\texttt{log\_ret}[p]|$ is small, by contrast, the detector has little reason to flag the origin
+as atypical, and the sign of the three-day target is instead decided by the two unleaked future
+returns the model has no access to, leaving accuracy near chance. The leak and the atypicality
+label were, in other words, driven by the same quantity, which is why conditioning on
+atypicality looked like it was isolating a genuinely more forecastable regime rather than simply
+isolating the origins where the leak itself was largest.
 
 \subsection{The fate of the Lyapunov explanation}
 \label{sec:lyapunov-fate}
@@ -550,6 +578,8 @@ and take full responsibility for the content of the publication.
 \bibitem[Ledoit and Wolf, 2004]{ledoit2004} Ledoit, O., \& Wolf, M. (2004). A well-conditioned estimator for large-dimensional covariance matrices. \emph{Journal of Multivariate Analysis}, 88(2), 365--411.
 
 \bibitem[Liu et al., 2008]{liu2008} Liu, F. T., Ting, K. M., \& Zhou, Z.-H. (2008). Isolation forest. In \emph{2008 Eighth IEEE International Conference on Data Mining} (pp. 413--422).
+
+\bibitem[Petropoulos et al., 2022]{petropoulos2022} Petropoulos, F., Apiletti, D., Assimakopoulos, V., Babai, M. Z., Barrow, D. K., Ben Taieb, S., et al. (2022). Forecasting: Theory and practice. \emph{International Journal of Forecasting}, 38(3), 705--871.
 
 \bibitem[Nikolopoulos, 2026]{nikolopoulos2026} Nikolopoulos, S. D. (2026). Spurious predictability in financial machine learning. \emph{arXiv preprint} arXiv:2604.15531.
 
