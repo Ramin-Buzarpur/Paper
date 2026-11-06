@@ -81,10 +81,18 @@ def collect(ticker, name, max_years, causal_scale, retrain_every=20, epochs=50):
         cov = LedoitWolf().fit(z)
         maha_score = float(cov.mahalanobis(pca.transform(pc[j:j + 1]))[0])
 
+        # embedding's own zero-lag component, log_ret[j+(M-1)*TAU] -- literally pc[j][0] before
+        # scaling. This is what the BUGGY pipeline reads as log_ret[p_buggy] and feeds straight
+        # into the target; it is NOT the same as log_ret[p] (the FIXED target's first step,
+        # one step later), which is what an earlier version of this script used by mistake --
+        # that measured ordinary volatility clustering between adjacent days, not the detector's
+        # sensitivity to its own leaked input.
+        leak_mag = abs(float(log_ret[j + (M - 1) * TAU]))
+
         rows.append({
             "origin_idx": j, "diff_atyp": diff_atyp, "iso": iso_score, "lof": lof_score,
             "maha": maha_score, "correct": int(pred_up == actual_up),
-            "leak_mag": abs(float(log_ret[p])),
+            "leak_mag": leak_mag,
         })
     return pd.DataFrame(rows)
 

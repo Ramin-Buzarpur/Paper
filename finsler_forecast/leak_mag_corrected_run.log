@@ -1,0 +1,35 @@
+Brent      Diffusion        rho=+0.472 p=7.852e-85  (gap=+2.61pp p=0.1645)
+Brent      IsolationForest  rho=+0.574 p=1.507e-133  (gap=+1.78pp p=0.2515)
+Brent      LOF              rho=+0.540 p=2.17e-115  (gap=+0.16pp p=0.4770)
+Brent      Mahalanobis-PCA  rho=+0.576 p=2.68e-134  (gap=+0.68pp p=0.3980)
+  [Brent done in 406s]
+S&P500     Diffusion        rho=+0.513 p=2.372e-107  (gap=-1.24pp p=0.6915)
+S&P500     IsolationForest  rho=+0.609 p=1.598e-162  (gap=-0.60pp p=0.6045)
+S&P500     LOF              rho=+0.532 p=4.69e-117  (gap=-1.61pp p=0.7470)
+S&P500     Mahalanobis-PCA  rho=+0.603 p=5.748e-158  (gap=-1.09pp p=0.6765)
+  [S&P500 done in 440s]
+Gold       Diffusion        rho=+0.409 p=4.002e-65  (gap=-5.43pp p=0.9845)
+Gold       IsolationForest  rho=+0.528 p=8.411e-115  (gap=+0.88pp p=0.3455)
+Gold       LOF              rho=+0.504 p=2.201e-103  (gap=-0.53pp p=0.5825)
+Gold       Mahalanobis-PCA  rho=+0.519 p=2.66e-110  (gap=-0.95pp p=0.6395)
+  [Gold done in 429s]
+Bitcoin    Diffusion        rho=+0.423 p=2.453e-50  (gap=-1.72pp p=0.7200)
+Bitcoin    IsolationForest  rho=+0.575 p=8.078e-101  (gap=+0.62pp p=0.4220)
+Bitcoin    LOF              rho=+0.515 p=1.362e-77  (gap=-2.87pp p=0.8230)
+Bitcoin    Mahalanobis-PCA  rho=+0.575 p=9.4e-101  (gap=-1.39pp p=0.6890)
+  [Bitcoin done in 262s]
+Ethereum   Diffusion        rho=+0.416 p=1.787e-38  (gap=+1.21pp p=0.3520)
+Ethereum   IsolationForest  rho=+0.585 p=8.507e-83  (gap=+3.64pp p=0.1350)
+Ethereum   LOF              rho=+0.538 p=6.734e-68  (gap=+1.09pp p=0.3715)
+Ethereum   Mahalanobis-PCA  rho=+0.598 p=3.377e-87  (gap=+6.16pp p=0.0250)
+  [Ethereum done in 187s]
+Silver     Diffusion        rho=+0.415 p=3.288e-67  (gap=+1.45pp p=0.3020)
+Silver     IsolationForest  rho=+0.531 p=1.526e-116  (gap=-2.05pp p=0.8015)
+Silver     LOF              rho=+0.481 p=5.402e-93  (gap=-1.83pp p=0.7740)
+Silver     Mahalanobis-PCA  rho=+0.530 p=4.694e-116  (gap=-1.80pp p=0.7620)
+  [Silver done in 425s]
+WTI Crude  Diffusion        rho=+0.497 p=3.666e-100  (gap=-1.05pp p=0.6535)
+WTI Crude  IsolationForest  rho=+0.581 p=2.23e-144  (gap=-0.34pp p=0.5505)
+WTI Crude  LOF              rho=+0.546 p=1.905e-124  (gap=-0.18pp p=0.5180)
+WTI Crude  Mahalanobis-PCA  rho=+0.601 p=4.982e-157  (gap=-0.12pp p=0.5160)
+  [WTI Crude done in 430s]

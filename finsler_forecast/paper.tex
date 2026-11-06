@@ -162,12 +162,12 @@ diagnostic protocol draws directly on the surrogate-data methodology introduced 
 (IAAFT), which matches the target spectrum more closely than the AAFT surrogates used here at
 higher computational cost; we chose AAFT because several hundred surrogates had to be
 generated per test, and its approximate spectral match was sufficient for the question asked
-(Section~5). This methodology underlies
+(Sections~4.2 and~4.5). This methodology underlies
 a decades-long, still-unsettled literature on whether financial return series exhibit genuine
 deterministic chaos or linear stochastic structure that merely resembles it, critically
 surveyed in \citet{barnett2000}. Studies applying surrogate-data and related nonlinearity tests
 to individual equity indices have reached conflicting conclusions depending on denoising and
-test choice: \citet{inglada2020} find no clear evidence of chaos across four major indices,
+test choice: \citet{inglada2020} finds no clear evidence of chaos across four major indices,
 while \citet{vogl2022} report an S\&P 500 return series consistent with roughly equal parts
 stochastic and deterministic chaos once the data is wavelet-denoised first. That contrast
 underscores that this remains an open methodological question rather than a settled one. The
@@ -181,14 +181,17 @@ dynamical-systems explanation.
 
 \subsection{Data}
 Daily close prices for seven assets, downloaded from Yahoo Finance: Brent crude (\texttt{BZ=F}),
-the S\&P 500 index (\texttt{\^{}GSPC}), gold (\texttt{GC=F}), silver (\texttt{SI=F}), WTI crude
+the S\&P 500 index (\texttt{\textasciicircum GSPC}), gold (\texttt{GC=F}), silver (\texttt{SI=F}), WTI crude
 (\texttt{CL=F}), Bitcoin (\texttt{BTC-USD}), and Ethereum (\texttt{ETH-USD}), using the maximum
 available history per asset (8--20 years depending on listing date).
 
 \subsection{Delay embedding and analog selection}
 Log returns $r_t = \log(P_t / P_{t-1})$ are delay-embedded into $\mathbb{R}^M$ with $M=3$,
-$\tau=1$. For a forecast origin with time index $t$, the embedding vector is $x_t = (r_{t},
-r_{t-\tau}, r_{t-2\tau})$; we index origins by $t$ throughout, and switch to the index $j$ only
+$\tau=1$, each component divided by a single scale factor, the standard deviation of $r_t$ over
+the full series, $\sigma = \mathrm{std}(r)$: $x_t = (r_t, r_{t-\tau}, r_{t-2\tau})/\sigma$.
+Section~\ref{sec:verification} examines the consequence of this full-sample (rather than causal,
+growing-window) scale choice directly. We index origins by $t$ throughout, and switch to the
+index $j$ only
 in Section~4.4, where $j$ denotes an origin's position in the pipeline's internal array rather
 than its calendar time, to match the pipeline's own variable names exactly where the algebra
 depends on them. For a forecast origin, the $K=7$ nearest
@@ -222,7 +225,11 @@ Table~\ref{tab:postfix} show it is not: the same pattern, before correction, and
 disappearance, after correction, are common to three classical detectors that do not involve a
 diffusion model at all. The remaining three detectors are Isolation Forest \citep{liu2008} with
 100 trees, Local Outlier Factor \citep{breunig2000} with 30 neighbors, and Mahalanobis distance
-in a 3-component PCA-reduced space with Ledoit-Wolf shrinkage \citep{ledoit2004}. These four
+in a $\min(M,3)$-component PCA-reduced space with Ledoit-Wolf shrinkage \citep{ledoit2004}; at
+the baseline $M=3$, this is a full-rank rotation rather than a dimensionality reduction (exact
+Mahalanobis distance is invariant to orthogonal rotation, so this does not trivialize the
+detector, but it only genuinely reduces dimensionality at $M=5$ in the hyperparameter grid of
+Section~5). These four
 detectors are constructed from structurally different statistics, isolation depth, local
 density, Mahalanobis distance, and diffusion reconstruction difficulty, and we do not assume any
 one of them is a monotone function of the embedding's Euclidean norm; Section~4.4's mechanism
@@ -319,12 +326,13 @@ predicting.
 
 Table~\ref{tab:notation} fixes the notation used from here on: $j$ indexes an origin in the
 pipeline's internal, zero-based array (the quantity in the code itself), while $p$, also an
-array index, marks the position the pipeline treats as ``today.'' Calendar time $t$ used
-elsewhere in the paper corresponds to array index $j+(M-1)\tau$ under the correct convention,
-i.e.\ $t=p$ once the fix below is applied; we use $j$ and $p$ rather than $t$ in this section
-specifically because the bug is a one-step discrepancy between two candidate array positions,
-and conflating them with a single calendar-time variable is exactly the ambiguity that let the
-bug go undetected.
+array index, marks the position the pipeline treats as ``today's price.'' Calendar time $t$ used
+elsewhere in the paper (Section~3.2's $x_t$) corresponds to array index $j+(M-1)\tau$, the
+position the embedding's own most recent return ends at; under the corrected convention this is
+$t=p-\tau$, one step before ``today's price'' $p=j+M\tau$, which is exactly the separation the
+bug collapsed. We use $j$ and $p$ rather than $t$ in this section specifically because the bug
+is a one-step discrepancy between two candidate array positions, and conflating them with a
+single calendar-time variable is exactly the ambiguity that let the bug go undetected.
 
 \begin{table}[h]
 \centering
@@ -456,6 +464,25 @@ the embedding and so preserves its leaked component's sign to a close approximat
 therefore reaches the final forecast through the analog average, not only through the current
 origin's own embedding.
 
+This qualitative argument also has a quantitative counterpart under the same idealization as
+Equation~(1), which we record because it closes a gap the single-origin result alone leaves
+open: that equation gives the probability the current origin's own target agrees in sign with
+its leaked component, not the probability the $K$-analog ensemble forecast agrees with the
+realized target. If every selected analog shares the same leaked component $r_p$ exactly (the
+idealization above) with independent unleaked continuations $R_{+,k} \sim
+\mathcal{N}(0,(H-1)\sigma^2)$, the analog average is $\bar{y}_K = r_p + \frac{1}{K}\sum_{k=1}^K
+R_{+,k}$, whose unleaked term has variance reduced by a factor of $K$; the same bivariate-Gaussian
+argument then gives, conditional on $|r_p|=c$, $\mathbb{P}(\operatorname{sign}(\bar{y}_K) =
+\operatorname{sign}(r_p) \mid |r_p|=c) = \Phi(\sqrt{K}\,c/(\sigma\sqrt{H-1})) \equiv q_K(c)$, and
+since $\bar y_K$ and the current origin's own target $y_p$ are conditionally independent given
+$r_p$, the ensemble's forecast accuracy is $q(c)\,q_K(c) + (1-q(c))(1-q_K(c))$, where
+$q(c)=\Phi(c/(\sigma\sqrt{H-1}))$ is the single-origin probability from Equation~(1). We verified
+this expression against direct Monte Carlo simulation of the idealization (agreement to three
+significant figures), and it behaves as the qualitative argument above suggests: it equals $0.5$
+at $c=0$ and, because $q_K$ grows faster than $q$ in $c$ for $K>1$, approaches $1$ faster than
+the single-origin probability alone as $c$ grows, so averaging over $K=7$ analogs sharpens,
+rather than dilutes, the leak's effect on the final forecast.
+
 \subsection{The fate of the Lyapunov explanation}
 \label{sec:lyapunov-fate}
 We now ask whether the dynamical-systems explanation (Section~4.1) is a second casualty of the
@@ -512,6 +539,7 @@ Section~7.2) tests the feature-construction code directly, rather than the sampl
 be run on.
 
 \section{Verification}
+\label{sec:verification}
 
 Given what the diagnosis implies, the central claim of a multi-month investigation turning out
 to be an artifact, we did not accept it on the strength of any single check. The six checks
@@ -561,53 +589,69 @@ an initial two-asset spot check to the full panel: all seven assets, all four de
 the full-sample scale actually used in the paper and a corrected causal (growing-window)
 variant, 56 gap estimates in total. Every diffusion-detector cell is non-significant under both
 conventions (Brent: $+2.6$pp moves to $-0.4$pp; S\&P 500: $-1.2$pp to $-2.9$pp; Gold: $-5.4$pp
-to $-6.4$pp; Bitcoin: $-1.7$pp to $+0.1$pp; Ethereum: $+1.2$pp to $-0.6$pp; Silver: $+1.5$pp to
-$+0.9$pp; WTI Crude: $-1.1$pp to $+0.6$pp), and across all 56 cells exactly the same single cell
+to $-6.4$pp; Bitcoin: $-1.7$pp to $+0.1$pp; Ethereum: $+1.2$pp to $-0.6$pp; Silver: $+1.4$pp to
+$+0.9$pp; WTI Crude: $-1.0$pp to $+0.6$pp, matching Table~\ref{tab:postfix}'s full-sample-scale
+column), and across all 56 cells exactly the same single cell
 already flagged in Table~\ref{tab:postfix}, Ethereum/Mahalanobis-PCA, is significant at $p<0.05$
 under both the full-sample scale ($p=0.025$) and the causal scale ($p=0.017$); every other cell
 is non-significant under both conventions. We read this as the same marginal, likely-chance cell
 reappearing under a second normalization choice, not as a second, independent leakage channel.
 Separately, as direct empirical evidence for the mechanism argued analytically in
 Section~\ref{sec:error}, we computed the Spearman correlation between each detector's
-atypicality score and the leaked return's magnitude, $|\texttt{log\_ret}[p]|$, across all 56
-asset-detector-scale combinations (7 assets, 4 detectors, both scale conventions): every single
-correlation is positive and significant at $p<0.01$; 54 of the 56 are significant at $p<10^{-3}$
-(most well beyond that, down to $p<10^{-38}$), with the two exceptions both involving the
-diffusion detector on Ethereum, the shortest and noisiest of the seven series ($p=0.0018$ and
-$p=0.0087$, still significant at any conventional threshold). This confirms that all four
-structurally different detectors, not only ones provably monotonic in the embedding norm, in
-practice score larger leaked returns as more atypical.
+atypicality score, on the corrected pipeline's embedding, and the magnitude of that embedding's
+own most recent raw-return component, $|\texttt{log\_ret}[j+(M-1)\tau]|$, i.e.\ the exact
+quantity the buggy convention reads directly into the forecast target, across all 28
+asset-detector combinations (7 assets, 4 detectors, full-sample scale). An earlier version of
+this check correlated detector scores against the magnitude of the return one step later instead
+(the fixed convention's target, not the embedding's own component), which mostly measures
+ordinary volatility clustering between adjacent days rather than the detector's sensitivity to
+its own input; correcting this, every one of the 28 correlations is positive, substantially
+stronger than the mis-specified version (Spearman $\rho$ ranging from $0.41$ to $0.61$, median
+$0.53$, versus $0.09$ to $0.32$ in the earlier, incorrect check), and significant beyond
+$p<10^{-38}$ in every case. This is direct confirmation that all four structurally different
+detectors, not only ones provably monotonic in the embedding norm, score larger values of the
+exact leaked component as more atypical.
 
 To check whether the leak-amplification mechanism is specific to the paper's own hyperparameter
-choices ($M=3$, $\tau=1$, $H=3$) or holds more generally, we ran a controlled grid over $M \in
-\{2,3,5\}$, $\tau \in \{1,2\}$, and $H \in \{1,3,5\}$ (54 cells), crossed with three leak
-severities, applying the buggy index convention uniformly to every origin's own target and to
-every one of its analogs' targets (not only the origin being scored, which is what actually
-makes the leak propagate through the $K$-neighbor average), on synthetic Gaussian AR(1) data
-with three classical detectors (diffusion retraining at every grid point was not computationally
-feasible for a grid this size). Averaged over all 54 cells, three detectors, and 5 seeds per
-cell: a leak-free origin ($\texttt{leak\_steps}=0$) gives a mean gap of $+0.2$pp, while a
-one-step leak matching the paper's actual bug gives $+7.1$pp and a two-step leak gives $+7.7$pp,
-replicated across every combination of $M$, $\tau$, and $H$ tested, not only the paper's own
+choices ($M=3$, $\tau=1$, $H=3$) or holds more generally, we ran a controlled grid over 18
+hyperparameter combinations ($M \in \{2,3,5\}$, $\tau \in \{1,2\}$, $H \in \{1,3,5\}$), each
+evaluated at three leak severities, $\texttt{leak\_steps} \in \{0,1,2\}$ (0 reproduces the fixed
+convention; 1 reproduces the paper's actual bug; 2 is a more severe variant), applying the buggy
+index convention uniformly to every origin's own target and to every one of its analogs' targets
+(not only the origin being scored, which is what actually makes the leak propagate through the
+$K$-neighbor average), on synthetic Gaussian AR(1) data ($\phi=0.15$, matched to Brent's
+volatility) with three classical detectors (diffusion retraining at every grid point was not
+computationally feasible for a grid this size). For each leak severity, averaging its mean gap
+over all 18 hyperparameter combinations and all three detectors (54 cell-detector pairs, 5 seeds
+each): a leak-free origin ($\texttt{leak\_steps}=0$) gives a mean gap of $+0.2$pp, a one-step
+leak matching the paper's actual bug gives $+7.1$pp, and a two-step leak gives $+7.7$pp,
+replicated across every one of the 18 $(M,\tau,H)$ combinations tested, not only the paper's own
 choice of hyperparameters.
 
 Finally, we extended the paper's Gaussian-IID white-noise null control (Section~4.3) to three
-additional null processes real returns resemble more closely, Student-$t$ ($\nu=4$) IID,
-Gaussian AR(1) ($\phi=0.15$), and GARCH(1,1) ($\alpha=0.08$, $\beta=0.90$), each run through the
-identical diffusion pipeline under both the buggy and fixed index convention, 5 independent
-seeds per process. The buggy convention's mean gap exceeds the fixed convention's on all three
-processes (Student-$t$: $+6.3$pp vs.\ $-2.0$pp; Gaussian AR(1): $+4.6$pp vs.\ $+3.0$pp;
-GARCH(1,1): $+3.5$pp vs.\ $+1.7$pp), consistent in direction with the Gaussian-IID result. We
-report this honestly as a weaker and noisier replication than the original control, however: at
-only 5 seeds per process, individual-seed significance was inconsistent, in contrast to the
-Gaussian-IID control's uniform significance, and the gap between buggy and fixed is small
-relative to the seed-to-seed standard deviation for the AR(1) and GARCH processes specifically.
-We attribute this to the serial dependence and conditional heteroskedasticity in these processes
-diluting the clean, independence-based argument of Section~\ref{sec:error}, and to the limited
-number of seeds we could afford to run; we do not treat this as disconfirming evidence, since
-the direction is uniformly correct and the Monte Carlo grid above independently confirms the
-same mechanism with much larger, cleaner effect sizes, but we also do not overstate it as a
-second clean replication of the original white-noise result.
+additional processes real returns resemble more closely, Student-$t$ ($\nu=4$) IID, Gaussian
+AR(1) ($\phi=0.15$), and GARCH(1,1) ($\alpha=0.08$, $\beta=0.90$), each run through the identical
+diffusion pipeline under both the buggy and fixed index convention, 5 independent seeds per
+process (mean gap $\pm$ one seed-to-seed standard deviation: Student-$t$ buggy $+6.3\pm2.6$pp,
+fixed $-2.0\pm3.6$pp; AR(1) buggy $+4.6\pm3.8$pp, fixed $+3.0\pm3.1$pp; GARCH(1,1) buggy
+$+3.5\pm1.9$pp, fixed $+1.7\pm2.4$pp). We distinguish two of these three from a true
+zero-predictability null before interpreting the comparison: Student-$t$ IID and GARCH(1,1) with
+a zero-mean conditional distribution both have $\mathbb{E}[\operatorname{sign}(y_p) \mid
+\mathcal{F}_{p-1}] = 0$ exactly, so any gap under the fixed convention is attributable only to
+sampling noise. Gaussian AR(1) with $\phi=0.15$ does not have this property: under the fixed
+convention, the causally known return $r_{p-1}$ carries genuine linear information about the
+target, $\mathbb{E}[y_p \mid r_{p-1}] = (\phi+\phi^2+\phi^3)\,r_{p-1} \approx 0.176\,r_{p-1}$,
+and by the same bivariate-Gaussian conditioning as Equation~(1), large $|r_{p-1}|$ both inflates
+the embedding norm and strengthens this genuine directional signal. A positive fixed-convention
+gap on AR(1) is therefore not unexpected or a sign of residual leakage; it is what a correctly
+functioning pipeline should show on a series with real, if weak, linear autocorrelation. Judged
+against that distinction, the strict-null processes behave as the mechanism predicts: the buggy
+convention's mean exceeds the fixed convention's by a wide margin on Student-$t$, with the fixed
+mean close to zero as expected, while GARCH(1,1) shows the same direction more weakly (gap
+between means smaller relative to seed-to-seed spread) and would benefit from more than 5 seeds
+before drawing a firm conclusion. We report this honestly as a noisier, lower-powered replication
+than the original Gaussian-IID control, not a second clean one; the Monte Carlo grid above, run
+on a much larger number of configurations, is the stronger piece of generalization evidence.
 
 \section{Results After Correction}
 
@@ -773,9 +817,9 @@ and take full responsibility for the content of the publication.
 
 \bibitem[Bailey et al., 2014]{bailey2014} Bailey, D. H., Borwein, J. M., L\'{o}pez de Prado, M., \& Zhu, Q. J. (2014). Pseudo-mathematics and financial charlatanism: The effects of backtest overfitting on out-of-sample performance. \emph{Notices of the American Mathematical Society}, 61(5), 458--471.
 
-\bibitem[Bergmeir et al., 2018]{bergmeir2018} Bergmeir, C., Hyndman, R. J., \& Koo, B. (2018). A note on the validity of cross-validation for evaluating autoregressive time series prediction. \emph{Computational Statistics \& Data Analysis}, 120, 70--83.
-
 \bibitem[Barnett and Serletis, 2000]{barnett2000} Barnett, W. A., \& Serletis, A. (2000). Martingales, nonlinearity, and chaos. \emph{Journal of Economic Dynamics and Control}, 24(5--7), 703--724.
+
+\bibitem[Bergmeir et al., 2018]{bergmeir2018} Bergmeir, C., Hyndman, R. J., \& Koo, B. (2018). A note on the validity of cross-validation for evaluating autoregressive time series prediction. \emph{Computational Statistics \& Data Analysis}, 120, 70--83.
 
 \bibitem[Breunig et al., 2000]{breunig2000} Breunig, M. M., Kriegel, H.-P., Ng, R. T., \& Sander, J. (2000). LOF: Identifying density-based local outliers. In \emph{Proceedings of the 2000 ACM SIGMOD International Conference on Management of Data} (pp. 93--104).
 
