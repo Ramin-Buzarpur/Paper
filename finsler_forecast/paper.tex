@@ -151,7 +151,13 @@ by \citet{coqueret2024}. The community-wide review of forecasting practice by
 \citet{petropoulos2022} likewise stresses that rigorous, bias-free out-of-sample evaluation is
 the field's central methodological obligation, independent of model choice; the failure mode we
 document is one concrete way that obligation can be violated while every individual evaluation
-step still appears to have been followed correctly.
+step still appears to have been followed correctly. \citet{bergmeir2018} show, conversely, that
+standard (non-blocked) cross-validation can in fact be valid for purely autoregressive
+prediction tasks under conditions weaker than commonly assumed; the failure mode here is not in
+tension with that result, since it does not arise from using an invalid validation scheme on a
+sound pipeline, but from a feature-construction defect that contaminates every fold, training and
+held-out alike, identically, which no choice of validation scheme, valid or otherwise, is
+positioned to catch.
 
 \textbf{Surrogate-data testing and the chaos-in-markets debate.} The second component of our
 diagnostic protocol draws directly on the surrogate-data methodology introduced by
@@ -416,9 +422,11 @@ isolating the origins where the leak itself was largest.
 This can be made precise under a simple idealization. Model returns as i.i.d.\ Gaussian,
 $r_t \sim \mathcal{N}(0,\sigma^2)$, and write the leaked target as $y_p = r_p + R_{+}$, where
 $r_p$ is the leaked component and $R_{+} = \sum_{h=1}^{H-1} r_{p+h} \sim
-\mathcal{N}(0,(H-1)\sigma^2)$ is independent of $r_p$. Since $(r_p, y_p)$ are jointly Gaussian
+\mathcal{N}(0,(H-1)\sigma^2)$ is independent of $r_p$. Then $\mathrm{Cov}(r_p,y_p) = \mathrm{Var}(r_p) = \sigma^2$ (the $R_{+}$
+term contributes nothing to the covariance, by independence), while $\mathrm{Var}(y_p) =
+\mathrm{Var}(r_p) + \mathrm{Var}(R_{+}) = H\sigma^2$. Since $(r_p, y_p)$ are jointly Gaussian
 with correlation $\rho = \mathrm{Cov}(r_p,y_p)/\sqrt{\mathrm{Var}(r_p)\mathrm{Var}(y_p)} =
-1/\sqrt{H}$, a standard identity for bivariate Gaussians gives
+\sigma^2/(\sigma\cdot\sigma\sqrt{H}) = 1/\sqrt{H}$, a standard identity for bivariate Gaussians gives
 \begin{equation}
 \mathbb{P}\bigl(\operatorname{sign}(r_p) = \operatorname{sign}(y_p)\bigr)
 = \frac{1}{2} + \frac{1}{\pi}\arcsin\!\left(\frac{1}{\sqrt{H}}\right).
@@ -565,11 +573,14 @@ is non-significant under both conventions. We read this as the same marginal, li
 reappearing under a second normalization choice, not as a second, independent leakage channel.
 Separately, as direct empirical evidence for the mechanism argued analytically in
 Section~\ref{sec:error}, we computed the Spearman correlation between each detector's
-atypicality score and the leaked return's magnitude, $|\texttt{log\_ret}[p]|$, across all 28
-asset-detector combinations: every single correlation is positive, and every one is significant
-at $p<10^{-3}$ (most at $p<10^{-8}$), confirming that all four structurally different detectors,
-not only ones provably monotonic in the embedding norm, in practice score larger leaked returns
-as more atypical.
+atypicality score and the leaked return's magnitude, $|\texttt{log\_ret}[p]|$, across all 56
+asset-detector-scale combinations (7 assets, 4 detectors, both scale conventions): every single
+correlation is positive and significant at $p<0.01$; 54 of the 56 are significant at $p<10^{-3}$
+(most well beyond that, down to $p<10^{-38}$), with the two exceptions both involving the
+diffusion detector on Ethereum, the shortest and noisiest of the seven series ($p=0.0018$ and
+$p=0.0087$, still significant at any conventional threshold). This confirms that all four
+structurally different detectors, not only ones provably monotonic in the embedding norm, in
+practice score larger leaked returns as more atypical.
 
 To check whether the leak-amplification mechanism is specific to the paper's own hyperparameter
 choices ($M=3$, $\tau=1$, $H=3$) or holds more generally, we ran a controlled grid over $M \in
@@ -765,6 +776,8 @@ and take full responsibility for the content of the publication.
 \bibitem[Alessandrini et al., 2015]{alessandrini2015} Alessandrini, S., Delle Monache, L., Sperati, S., \& Nissen, J. (2015). A novel application of an analog ensemble for short-term wind power forecasting. \emph{Renewable Energy}, 76, 768--781.
 
 \bibitem[Bailey et al., 2014]{bailey2014} Bailey, D. H., Borwein, J. M., L\'{o}pez de Prado, M., \& Zhu, Q. J. (2014). Pseudo-mathematics and financial charlatanism: The effects of backtest overfitting on out-of-sample performance. \emph{Notices of the American Mathematical Society}, 61(5), 458--471.
+
+\bibitem[Bergmeir et al., 2018]{bergmeir2018} Bergmeir, C., Hyndman, R. J., \& Koo, B. (2018). A note on the validity of cross-validation for evaluating autoregressive time series prediction. \emph{Computational Statistics \& Data Analysis}, 120, 70--83.
 
 \bibitem[Barnett and Serletis, 2000]{barnett2000} Barnett, W. A., \& Serletis, A. (2000). Martingales, nonlinearity, and chaos. \emph{Journal of Economic Dynamics and Control}, 24(5--7), 703--724.
 
