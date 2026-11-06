@@ -1272,6 +1272,39 @@ divergence/contraction signal naturally dilutes over a longer window — exactly
 dynamical-systems theory predicts, not a sign of fragility). This closes the most obvious
 remaining robustness objection to the paper's central mechanism claim.
 
+**Finding 48 — a calendar-subperiod robustness check: is either headline claim a product of
+one particular market era? The Lyapunov mechanism is essentially invariant across eras; the
+binary-accuracy claim shows the same asset-specific heterogeneity already documented
+elsewhere, not a new period-specific weakness.** `subperiod_robustness.py` splits each asset's
+full fold history at its calendar midpoint into an early half and a late half (a genuine
+calendar split, each half corresponding to a different macro era for most of these assets —
+e.g. Brent's early half is 2008-2017, its late half 2017-2026) and re-runs both the
+binary-accuracy permutation test and the local-Lyapunov permutation test independently within
+each half.
+
+| asset | period split | accuracy gap, early / late | LLE difference, early / late |
+|---|---|---|---|
+| Brent | 2008-2017 / 2017-2026 | +6.6pp (p=0.038) / **+12.7pp (p<0.0001)** | -0.159 (p<0.001) / -0.177 (p<0.001) |
+| S&P 500 | 2008-2017 / 2017-2026 | -0.3pp (n.s.) / +1.2pp (n.s.) | -0.160 (p<0.001) / -0.115 (p<0.001) |
+| Gold | 2008-2017 / 2017-2026 | +6.4pp (p=0.031) / +2.7pp (n.s.) | -0.172 (p<0.001) / -0.164 (p<0.001) |
+| Bitcoin | 2017-2022 / 2022-2026 | +4.4pp (n.s.) / +2.2pp (n.s.) | -0.181 (p<0.001) / -0.200 (p<0.001) |
+| Ethereum | 2019-2023 / 2023-2026 | +6.6pp (p=0.074) / **+13.1pp (p=0.003)** | -0.150 (p<0.001) / -0.150 (p<0.001) |
+| Silver | 2008-2017 / 2017-2026 | **+12.1pp (p<0.0001)** / +6.1pp (p=0.043) | -0.205 (p<0.001) / -0.199 (p<0.001) |
+| WTI Crude | 2008-2017 / 2017-2026 | +10.0pp (p=0.002) / +10.0pp (p=0.003) | -0.168 (p<0.001) / -0.197 (p<0.001) |
+
+**The Lyapunov mechanism: 14 of 14 asset-by-period cells significant (p<0.001), with the effect
+size essentially unchanged between the early and late half of every single asset's history.**
+This is the most calendar-stable result in the entire investigation — the dynamical mechanism
+is not a product of any specific market era (not the 2008 crisis, not COVID, not the 2022
+rate-hike cycle). The binary-accuracy claim shows a different, already-familiar pattern rather
+than a new weakness: S&P 500 and Bitcoin remain non-significant in BOTH halves (consistent with
+every other finding involving these two assets), while Gold's and Ethereum's significance flips
+between halves (Gold significant only early, Ethereum significant only late) — heterogeneity
+consistent with finding 34's observation that this specific signal behaves differently across
+assets and regimes, not a sign that the underlying phenomenon is spurious. Brent, Silver, and
+WTI Crude remain significant in both halves, as they did in the original held-out test
+(finding 33-B).
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
