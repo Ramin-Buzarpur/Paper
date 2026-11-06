@@ -1234,6 +1234,32 @@ the fusion, systemic-risk-index, Granger-network, and classical-baseline finding
 38-40, 43-44), which remain exploratory/suggestive pending their own held-out confirmation if
 that becomes a priority.
 
+**Finding 47 — the local-Lyapunov mechanism is robust to the specific Theiler window and
+divergence horizon chosen, not an artifact of one parameter choice.** The single most likely
+remaining robustness question about the paper's headline mechanism (findings 41/46) is whether
+it depends on the particular Theiler-exclusion window (10) and divergence horizon (3, = the
+forecast's own `HORIZON`) used everywhere else in this investigation. `lyapunov_param_robustness.py`
+recomputes the local Lyapunov exponent under all 9 combinations of Theiler window (5, 10, 20)
+and divergence horizon (3, 6, 10 steps), on Brent (the strongest asset) and S&P 500 (the
+persistently weakest asset throughout this entire investigation — the hardest case to pass).
+
+| asset | Theiler | horizon | atypical-minus-typical LLE | p-value |
+|---|---|---|---|---|
+| Brent | 5 / 10 / 20 | 3 | -0.166 / -0.166 / -0.167 | p<0.001 (all) |
+| Brent | 5 / 10 / 20 | 6 | -0.086 / -0.087 / -0.088 | p<0.001 (all) |
+| Brent | 5 / 10 / 20 | 10 | -0.047 / -0.048 / -0.049 | p<0.001 (all) |
+| S&P 500 | 5 / 10 / 20 | 3 | -0.147 / -0.148 / -0.150 | p<0.001 (all) |
+| S&P 500 | 5 / 10 / 20 | 6 | -0.089 / -0.089 / -0.089 | p<0.001 (all) |
+| S&P 500 | 5 / 10 / 20 | 10 | -0.057 / -0.058 / -0.059 | p<0.001 (all) |
+
+**All 18 of 18 parameter combinations** — on both the best-case and worst-case asset — hold the
+same direction (atypical days more contracting) at p<0.001. The Theiler window choice barely
+moves the result at all (differences in the third decimal place); the divergence horizon has a
+real but monotonic, expected effect (the gap shrinks as the horizon lengthens, since any local
+divergence/contraction signal naturally dilutes over a longer window — exactly what the
+dynamical-systems theory predicts, not a sign of fragility). This closes the most obvious
+remaining robustness objection to the paper's central mechanism claim.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
