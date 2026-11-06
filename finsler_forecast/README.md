@@ -992,6 +992,20 @@ enough to move its own panel's constituent assets, not to every systemically imp
 an important scope boundary to state explicitly rather than let the strong 2008/2020 results
 imply more generality than the evidence supports.
 
+**⚠️ CORRECTED BY FINDINGS 49-50 BELOW — read those before citing this finding.** The
+"dynamical-systems mechanism" framing below was substantially walked back after surrogate-data
+testing (finding 49) showed the atypical-vs-typical mean-LLE gap reported here is NOT
+distinguishable from what a purely linear, non-chaotic surrogate series with the same spectrum
+produces — i.e., this specific gap statistic is not, by itself, evidence of genuine
+market-specific nonlinear dynamics. A separate, decisive regression test (finding 50) shows LLE
+*does* retain real incremental predictive value for forecast accuracy beyond the atypicality
+score — so the quantity is not worthless, but calling it a confirmed "dynamical-systems
+mechanism explaining WHY" is no longer accurate. Findings 46, 47, and 48 (which built directly
+on this framing) inherit the same correction. The numbers and tests below are left as
+originally reported for transparency; treat every "confirmed mechanism" / "dynamical
+explanation" claim in this and the next three findings as retracted and superseded by findings
+49-50's more careful framing.
+
 **Finding 41 — a dynamical-systems mechanism: atypical days have measurably more contracting
 local dynamics, explaining WHY they are more predictable, not just THAT they are.**
 `local_lyapunov_regime.py` tests whether the core finding has a first-principles explanation in
@@ -1198,9 +1212,14 @@ collected successfully against AR(1) on this re-run, closing the one asset gap n
 original finding 43.) The updated tables and numbers are reflected directly in findings 42-44
 above rather than repeated here.
 
-**Finding 46 — the dynamical-systems mechanism (finding 41) is confirmed, not just
-exploratory: it replicates on genuinely held-out data, using the same single-shot holdout
-protocol as finding 33-B.** This investigation tried a very large number of methods and
+**⚠️ CORRECTED BY FINDINGS 49-50 — this finding confirms that the finding-41 GAP STATISTIC
+replicates out-of-sample, which still stands as a replication fact; it does NOT establish that
+the gap reflects genuine nonlinear dynamics (surrogate testing in finding 49 says it does not).
+Read as "the LLE-based split is a stable, reproducible pattern," not as "the dynamical
+mechanism is confirmed."**
+
+**Finding 46 — the LLE-based atypical/typical split (finding 41) replicates on genuinely
+held-out data, using the same single-shot holdout protocol as finding 33-B.** This investigation tried a very large number of methods and
 framings over the course of several months (now 46 numbered findings), and only finding 33's
 core claim had previously been checked against a truly untouched 20% holdout. Every other
 addition — including the Lyapunov-exponent mechanism explanation, the single most important
@@ -1246,7 +1265,14 @@ fusion, systemic-risk-index, Granger-network, and classical-baseline findings (3
 43-44), which remain exploratory/suggestive pending their own held-out confirmation if that
 becomes a priority.
 
-**Finding 47 — the local-Lyapunov mechanism is robust to the specific Theiler window and
+**⚠️ CORRECTED BY FINDINGS 49-50 — parameter-insensitivity does not rule out a geometric
+artifact (an artifact can be just as stable across parameter choices as a real mechanism
+would be; finding 49's surrogate test is the correct tool for that question, not this one).
+This finding still correctly establishes that the LLE-split pattern itself is not a fragile,
+cherry-picked-parameter result — that part stands — just not as evidence the pattern is
+"mechanism," specifically.**
+
+**Finding 47 — the LLE-based split pattern is robust to the specific Theiler window and
 divergence horizon chosen, not an artifact of one parameter choice.** The single most likely
 remaining robustness question about the paper's headline mechanism (findings 41/46) is whether
 it depends on the particular Theiler-exclusion window (10) and divergence horizon (3, = the
@@ -1271,6 +1297,10 @@ real but monotonic, expected effect (the gap shrinks as the horizon lengthens, s
 divergence/contraction signal naturally dilutes over a longer window — exactly what the
 dynamical-systems theory predicts, not a sign of fragility). This closes the most obvious
 remaining robustness objection to the paper's central mechanism claim.
+
+**⚠️ CORRECTED BY FINDINGS 49-50 — same caveat as finding 47: temporal stability of the
+LLE-split pattern is a real, useful fact (it's not a one-era fluke) but does not by itself
+distinguish genuine dynamics from a stable geometric artifact. See 49-50 for that question.**
 
 **Finding 48 — a calendar-subperiod robustness check: is either headline claim a product of
 one particular market era? The Lyapunov mechanism is essentially invariant across eras; the
@@ -1319,6 +1349,78 @@ WTI Crude remain significant in both halves, as they did in the original held-ou
 (finding 33-B). Given the precision note above, this finding should be cited in any write-up
 as evidence that finding 41's pattern is temporally stable, complementing — not substituting
 for — finding 46's stricter, frozen-threshold holdout confirmation of the same mechanism.
+
+**Finding 49 — a surrogate-data test (the field-standard check in nonlinear time-series
+analysis, Theiler et al. 1992) shows the atypical-vs-typical mean-LLE gap is NOT distinguishable
+from what a purely linear surrogate series produces, undercutting the "genuine nonlinear
+dynamics" interpretation of findings 41/46/47/48.** The question a dynamical-systems-literate
+reviewer asks first about a Lyapunov-exponent claim: could ANY series with the same linear
+autocorrelation/amplitude distribution as these returns produce the same atypical-vs-typical
+LLE gap, with no real chaotic structure at all? `surrogate_data_test.py` generates 200 AAFT
+(Amplitude-Adjusted Fourier Transform) surrogates per asset — series that share the real data's
+power spectrum and amplitude distribution exactly, with phases randomized to destroy any
+nonlinear temporal structure beyond that — and recomputes the atypical-vs-typical LLE gap on
+each, using a cheap causal k-NN distance score as the atypicality proxy (for computational
+tractability across 200 surrogates; finding 33 already established the phenomenon is
+detector-agnostic).
+
+| asset | real gap | surrogate null (n=200) | rank-based p-value |
+|---|---|---|---|
+| Brent | -0.239 | mean -0.332, range [-0.374, -0.296] | **p=1.0000** |
+| S&P 500 | -0.190 | mean -0.353, range [-0.392, -0.300] | **p=1.0000** |
+
+**The real gap falls entirely outside, and on the WEAKER side of, all 200 surrogate gaps for
+both assets** — the surrogates, which by construction contain no genuine nonlinear dynamics,
+show an equal-or-larger version of the same "pattern" than the real market data does. This
+means the atypical-vs-typical LLE gap, as a standalone statistic, is substantially explained by
+generic finite-sample geometry of nearest-neighbor estimators in an embedded point cloud — not
+by anything specific to real financial dynamics. `surrogate_data_test_elbo.py` repeats this
+with a reduced sample (20 surrogates, S&P 500 only) using the ACTUAL diffusion ELBO atypicality
+score from findings 41-48 rather than the cheap k-NN proxy, to rule out that the result was an
+artifact of the proxy substitution: real gap -0.144 vs. surrogate range [-0.287, -0.223]
+(mean -0.260) — the same conclusion, confirming it is not specific to which detector defines
+"atypical."
+
+**Finding 50 — but LLE is not worthless: a pre-specified decisive test shows it retains real
+incremental explanatory power for actual forecast accuracy, beyond the atypicality score,
+in the real data.** Given finding 49's result, the natural follow-up question is whether the
+LLE-accuracy relationship (findings 41/46) is *entirely mediated by* (redundant with) the
+atypicality score — which would mean LLE adds nothing finding 33 didn't already establish — or
+whether it carries independent information. `lyapunov_incremental_test.py` fits a logistic
+regression of actual forecast correctness on both the (standardized) atypicality score and
+(standardized) LLE together, with a decision rule fixed before running: LLE is kept as a
+meaningful auxiliary feature only if its coefficient remains significant (p<0.05) after
+controlling for atypicality.
+
+| asset | LLE coef. (univariate) | atypicality coef. (controlled) | LLE coef. (controlled) | LLE p-value (controlled) |
+|---|---|---|---|---|
+| Brent | -0.233, p<0.0001 | +0.159, p=0.013 | -0.170 | **p=0.005** |
+| S&P 500 | -0.265, p<0.0001 | -0.108, p=0.054 | -0.305 | **p<0.0001** |
+| Gold | -0.319, p<0.0001 | +0.034, p=0.609 | -0.306 | **p<0.0001** |
+| Bitcoin | -0.346, p<0.0001 | +0.054, p=0.499 | -0.326 | **p<0.0001** |
+| Ethereum | -0.279, p=0.0001 | +0.208, p=0.011 | -0.202 | **p=0.010** |
+| Silver | -0.305, p<0.0001 | +0.201, p=0.007 | -0.234 | **p=0.0001** |
+| WTI Crude | -0.320, p<0.0001 | +0.177, p=0.018 | -0.258 | **p<0.0001** |
+
+**7 of 7 assets: LLE retains significant incremental power** after controlling for the
+atypicality score — by the pre-specified rule, it is kept as a genuinely useful auxiliary
+predictive feature. Note also that the atypicality score itself loses significance in 3 of 7
+assets (Gold, Bitcoin, S&P 500, the latter only marginally) once LLE is included — in those
+cases LLE is doing more of the explanatory work than atypicality, not less.
+
+**How to honestly reconcile findings 41/46/47/48 with 49/50 in any write-up:** LLE is a real,
+robust, incrementally-informative predictor of forecast accuracy (50), reproducible across
+assets, holdout periods, calendar eras, and estimator parameters (46-48) — none of that is in
+question. What is no longer supportable is the *causal/mechanistic interpretation* that this
+reflects genuine market-specific chaotic contraction, since the same descriptive gap statistic
+is reproduced by linear surrogates with no real dynamics at all (49). The honest framing for a
+submission is: **"a Lyapunov-derived feature improves conditional forecast evaluation beyond a
+standard novelty/anomaly score, for reasons not fully explained by nonlinear dynamics theory
+despite the superficial resemblance — the mechanism remains an open question."** This is a
+weaker, more defensible claim than the original "dynamical-systems mechanism" framing, arrived
+at by actually running the test a critical reviewer would run, rather than by assuming the
+theoretically-motivated story was automatically correct. That is itself a point in the paper's
+favor if reported this way, not a reason to drop the Lyapunov material entirely.
 
 ## Final summary across all 27 methods tested
 
