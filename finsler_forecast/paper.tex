@@ -25,22 +25,18 @@
 \address[a2]{Department of Electrical Engineering, Control Systems (affiliation to be confirmed)}
 
 \begin{abstract}
-We document a case of spurious predictability in delay-embedding-based financial forecasting
-and trace it to its root cause. Testing four novelty and anomaly detectors across seven asset
-classes, we initially found forecast accuracy substantially higher on days flagged as locally
-atypical, surviving walk-forward cross-validation, permutation testing, and a genuine
-out-of-sample holdout. The result was an artifact of a one-step index error: the embedding's
-most recent component was numerically identical to the first step of the future return being
-predicted. We show analytically why this leak concentrates on exactly the days the
-anomaly-conditioning step flags as atypical, turning a small index error into a large,
-regime-specific illusion of predictability. We confirm this diagnosis algebraically, across many origins in the real data, with
-a pipeline-free correlation test, a null control on synthetic white noise, an independent
-from-scratch re-implementation, and a power test showing the corrected pipeline still detects
-genuine signal. All four detectors were affected identically,
-pointing to the shared embedding rather than any one method. We propose a
-null-noise-plus-surrogate-data diagnostic that would have caught this error in hours rather
-than months, and recommend it as standard practice before reporting a positive result in this
-class of study.
+We document spurious predictability in delay-embedding-based financial forecasting and trace it
+to its root cause. Testing four anomaly detectors across seven asset classes, we found forecast
+accuracy substantially higher on days flagged as locally atypical, a result that survived
+walk-forward cross-validation, permutation testing, and an out-of-sample holdout. The effect was
+an artifact of a one-step index error: the embedding's most recent component was numerically
+identical to the first step of the future return being predicted. We show analytically why this
+leak concentrates on atypical-flagged days, turning a small index error into a large,
+regime-specific illusion of predictability, and confirm the diagnosis algebraically, with a null
+control on synthetic noise, an independent re-implementation, and a power test showing the
+corrected pipeline still detects genuine signal. All four detectors were affected identically.
+We propose a null-noise-plus-surrogate-data diagnostic that would have caught this error in
+hours, and recommend it as standard practice.
 \end{abstract}
 
 \begin{keyword}
