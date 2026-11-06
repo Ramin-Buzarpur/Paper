@@ -4,6 +4,8 @@
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, decorations.pathreplacing}
 
 \journal{International Journal of Forecasting}
 
@@ -302,7 +304,48 @@ embedding's most recent return is $\texttt{log\_ret}[p-\tau]$, the return that e
 today's price, $\texttt{prices}[p]$; the forecast target is the return that begins at
 $\texttt{prices}[p]$ and extends forward. The two are adjacent in the return index, so no day
 of history is skipped, but the target return itself is entirely unrealized as of today, which
-is what the original, off-by-one convention failed to guarantee.
+is what the original, off-by-one convention failed to guarantee. Figure~\ref{fig:timeline}
+illustrates both conventions on a common return-index axis.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[font=\footnotesize, x=1.05cm]
+
+\node[anchor=east] at (-0.3,2.3) {\textbf{Buggy}};
+\foreach \i/\lab in {0/r_{p-3},1/r_{p-2},2/r_{p-1},3/r_{p},4/r_{p+1},5/r_{p+2}} {
+  \ifnum\i=3
+    \draw[fill=black!15] (\i,2) rectangle (\i+1,2.7);
+  \else
+    \draw (\i,2) rectangle (\i+1,2.7);
+  \fi
+  \node at (\i+0.5,2.35) {$\lab$};
+}
+\draw[decorate, decoration={brace, amplitude=5pt, mirror}] (1,1.95) -- (4,1.95)
+  node[midway, below=5pt] {embedding $x_j$ ($M=3$)};
+\draw[decorate, decoration={brace, amplitude=5pt}] (3,2.75) -- (6,2.75)
+  node[midway, above=5pt] {target $y_j$ ($H=3$)};
+\node at (7.3,2.35) {\textcolor{red!70!black}{$\leftarrow$ shared}};
+
+\node[anchor=east] at (-0.3,0.0) {\textbf{Fixed}};
+\foreach \i/\lab in {0/r_{p-3},1/r_{p-2},2/r_{p-1},3/r_{p},4/r_{p+1},5/r_{p+2}} {
+  \draw (\i,-0.35) rectangle (\i+1,0.35);
+  \node at (\i+0.5,0.0) {$\lab$};
+}
+\draw[decorate, decoration={brace, amplitude=5pt, mirror}] (0,-0.4) -- (3,-0.4)
+  node[midway, below=5pt] {embedding $x_j$ ($M=3$)};
+\draw[decorate, decoration={brace, amplitude=5pt}] (3,0.4) -- (6,0.4)
+  node[midway, above=5pt] {target $y_j$ ($H=3$)};
+\node at (7.3,0.0) {\textcolor{green!40!black}{$\leftarrow$ disjoint}};
+
+\end{tikzpicture}
+\caption{The embedding (bottom brace) and the forecast target (top brace) on a shared
+return-index axis. Under the buggy convention (top), the embedding's most recent component,
+$r_p$ (shaded), is also the first return summed into the target: the model is given, as input,
+one of the three numbers it is being asked to predict. Under the fixed convention (bottom), the
+embedding ends at $r_{p-1}$ and the target begins at $r_p$; the two sets of returns no longer
+overlap.}
+\label{fig:timeline}
+\end{figure}
 
 This also explains why the leak inflated accuracy specifically on days flagged as atypical,
 rather than uniformly across all origins. The leaked return, $\texttt{log\_ret}[p]$, is both the
