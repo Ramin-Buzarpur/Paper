@@ -199,24 +199,37 @@ excludes a Theiler window of 10 days around the origin to avoid trivial temporal
 the selected analogs.
 
 \subsection{Atypicality detectors}
-Four detectors score each origin's atypicality. The first is the reconstruction loss (ELBO) of
-a small denoising diffusion model \citep{ho2020}, a 2-layer MLP with hidden width 32 and 50
-diffusion steps, trained with Adam (learning rate $2\times10^{-3}$, batch size 128, weight
-decay $10^{-5}$, 50 epochs) causally on the embedded history up to the current origin, and
-retrained every 20 folds on an expanding window. We chose a diffusion-model ELBO over a plain
-autoencoder's reconstruction error because the ELBO is an estimate of the model's log-density
-under the data distribution, aggregated over the full noise schedule, rather than a single
-point estimate of reconstruction error at one noise level; it is, in this sense, a more
-complete density-based novelty score, at the cost of more training compute than an
-autoencoder would need. We do not claim the diffusion architecture is necessary for the
-qualitative result, and Table~\ref{tab:prefix} and Table~\ref{tab:postfix} show it is not: the
-same pattern, before correction, and its disappearance, after correction, are common to three
-classical detectors that do not involve a diffusion model at all. The remaining three
-detectors are Isolation Forest \citep{liu2008} with 100 trees, Local Outlier Factor
-\citep{breunig2000} with 30 neighbors, and Mahalanobis distance in a 3-component PCA-reduced
-space with Ledoit-Wolf shrinkage \citep{ledoit2004}. All four are fit causally on an expanding
-window (minimum 250 observations) and retrained every 20 folds on history up to the current
-origin only; none has access to any data at or after the origin being scored.
+Four detectors score each origin's atypicality, and we refer to them throughout by shorthand
+names that reflect what each one responds to, without claiming they respond identically or
+through the same functional form. The first, which we label ``diffusion-ELBO'' for brevity, is
+the training objective of a small denoising diffusion model \citep{ho2020}: a 2-layer MLP with
+hidden width 32, trained with Adam (learning rate $2\times10^{-3}$, batch size 128, weight decay
+$10^{-5}$, 50 epochs) causally on the embedded history up to the current origin and retrained
+every 20 folds on an expanding window. Concretely, for a query point we sample noise at all 50
+diffusion steps, compute the network's noise-prediction squared error at each step, $\lVert
+\hat{\epsilon}_\theta(x_t,t) - \epsilon \rVert^2$ with $x_t = \sqrt{\bar\alpha_t}\,x_0 +
+\sqrt{1-\bar\alpha_t}\,\epsilon$, and average over all 50 steps; this is the $L_{\text{simple}}$
+training objective of \citet{ho2020}, a reweighted surrogate for the true variational bound
+rather than the ELBO itself, which we flag explicitly here since the two are related but not
+identical. We chose this score over a plain autoencoder's reconstruction error because it
+aggregates reconstruction difficulty over the full noise schedule rather than a single point
+estimate at one noise level; it is, in this sense, a more complete density-sensitive novelty
+score, at the cost of more training compute than an autoencoder would need. We do not claim the
+diffusion architecture is necessary for the qualitative result, and Table~\ref{tab:prefix} and
+Table~\ref{tab:postfix} show it is not: the same pattern, before correction, and its
+disappearance, after correction, are common to three classical detectors that do not involve a
+diffusion model at all. The remaining three detectors are Isolation Forest \citep{liu2008} with
+100 trees, Local Outlier Factor \citep{breunig2000} with 30 neighbors, and Mahalanobis distance
+in a 3-component PCA-reduced space with Ledoit-Wolf shrinkage \citep{ledoit2004}. These four
+detectors are constructed from structurally different statistics, isolation depth, local
+density, Mahalanobis distance, and diffusion reconstruction difficulty, and we do not assume any
+one of them is a monotone function of the embedding's Euclidean norm; Section~4.4's mechanism
+argument only requires that each detector tend, on average, to assign higher atypicality to
+larger perturbations somewhere in the embedding, which is a weaker and more defensible premise
+than strict norm-monotonicity, and which the shared empirical pattern across all four detectors
+in Tables~\ref{tab:prefix}--\ref{tab:postfix} is itself evidence for. All four are fit causally
+on an expanding window (minimum 250 observations) and retrained every 20 folds on history up to
+the current origin only; none has access to any data at or after the origin being scored.
 
 \subsection{Evaluation}
 We use nested nonoverlapping walk-forward folds with step size $H$ over an expanding window
@@ -302,7 +315,36 @@ unusual today looks and which historical days resemble it, was not actually know
 moment the forecast was made. It was one day into the future the model was supposedly
 predicting.
 
-More precisely, with origin index $j$, embedding length $M$, and delay $\tau$, the project's
+Table~\ref{tab:notation} fixes the notation used from here on: $j$ indexes an origin in the
+pipeline's internal, zero-based array (the quantity in the code itself), while $p$, also an
+array index, marks the position the pipeline treats as ``today.'' Calendar time $t$ used
+elsewhere in the paper corresponds to array index $j+(M-1)\tau$ under the correct convention,
+i.e.\ $t=p$ once the fix below is applied; we use $j$ and $p$ rather than $t$ in this section
+specifically because the bug is a one-step discrepancy between two candidate array positions,
+and conflating them with a single calendar-time variable is exactly the ambiguity that let the
+bug go undetected.
+
+\begin{table}[h]
+\centering
+\caption{Notation used in Section~4.4.}
+\label{tab:notation}
+\begin{tabular}{@{}lp{10cm}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$P_t$ & Price at calendar/array position $t$ \\
+$r_t,\ \texttt{log\_ret}[t]$ & Return ending at position $t$, $r_t = \log(P_t/P_{t-1})$ \\
+$j$ & Origin index in the pipeline's internal array (zero-based) \\
+$M,\tau$ & Embedding length and delay ($M=3$, $\tau=1$) \\
+$p$ & Array index the pipeline treats as ``today's price'' \\
+$x_j^{(0)}$ & Embedding's most recent (zero-lag) component for origin $j$ \\
+$H$ & Forecast horizon ($H=3$) \\
+$y_j$ & Forecast target for origin $j$: the $H$-step return beginning at $p$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With origin index $j$, embedding length $M$, and delay $\tau$, the project's
 convention located ``today's price'' at array index $p = j + (M-1)\tau$ and defined the
 forecast target as the $H$-step return beginning at $p$. The embedding's most recent
 component, $x_j^{(0)}$, is constructed from $\texttt{log\_ret}[j + (M-1)\tau]$, which is
@@ -357,8 +399,9 @@ overlap.}
 
 This also explains why the leak inflated accuracy specifically on days flagged as atypical,
 rather than uniformly across all origins. The leaked return, $\texttt{log\_ret}[p]$, is both the
-largest-magnitude component entering the embedding norm (and hence the atypicality score, since
-all four detectors respond to large deviations in the embedding) and the first of the three
+largest-magnitude component entering the embedding norm, and, on average, the atypicality score
+(Section~3.3 states this more carefully: we do not assume any detector is a strict monotone
+function of the norm, only that each tends to score large perturbations as more atypical) and the first of the three
 summands making up the $H=3$-day target. When $|\texttt{log\_ret}[p]|$ is itself large, an origin
 is simultaneously pushed toward the high-atypicality tail of the detector's score and, because a
 large first summand increasingly dominates the three-day sum it belongs to, pushed toward a
