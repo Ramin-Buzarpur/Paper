@@ -29,9 +29,10 @@ classes, we initially found forecast accuracy substantially higher on days flagg
 atypical, surviving walk-forward cross-validation, permutation testing, and a genuine
 out-of-sample holdout. The result was an artifact of a one-step index error: the embedding's
 most recent component was numerically identical to the first step of the future return being
-predicted. We confirm this algebraically, with a correlation test, a null control on
-synthetic white noise, an independent re-implementation, and a power test showing the
-corrected pipeline still detects genuine signal. All four detectors were affected identically,
+predicted. We confirm this diagnosis algebraically, across many origins in the real data, with
+a pipeline-free correlation test, a null control on synthetic white noise, an independent
+from-scratch re-implementation, and a power test showing the corrected pipeline still detects
+genuine signal. All four detectors were affected identically,
 pointing to the shared embedding rather than any one method. We propose a
 null-noise-plus-surrogate-data diagnostic that would have caught this error in hours rather
 than months, and recommend it as standard practice before reporting a positive result in this
@@ -292,9 +293,8 @@ is what the original, off-by-one convention failed to guarantee.
 
 \subsection{The fate of the Lyapunov explanation}
 \label{sec:lyapunov-fate}
-Section~\ref{sec:lyapunov-fate}'s question is whether the dynamical-systems explanation
-(Section~4.1) is a second casualty of the same indexing error, or a separate problem. It is
-the latter. The local-Lyapunov-exponent calculation uses the origin index $j$ and a forward
+We now ask whether the dynamical-systems explanation (Section~4.1) is a second casualty of the
+same indexing error, or a separate problem. It is the latter. The local-Lyapunov-exponent calculation uses the origin index $j$ and a forward
 offset directly; it never reads the mis-specified index $p$ at all, so it was never affected
 by the bug in the first place. Re-running it against the corrected pipeline's atypicality
 scores confirms this directly: the atypical-versus-typical gap in local Lyapunov exponents is
@@ -353,11 +353,9 @@ code repository (see the Data and Code Availability statement).
 \item \textbf{Exact algebraic identity.} We hand-derived and numerically confirmed that
 $x_j^{(0)}$ equals $\texttt{log\_ret}[p]$ exactly, not approximately, on a tiny synthetic price
 array.
-\item \textbf{Generalization across the real series.} We repeated the same check over many
-origins spread across real Brent history, using two different sampling steps in two separate
-scripts (33 origins at one spacing, 47 at another, in a fully independent re-implementation
-described below): the overlap held universally under the old formula and never under the
-corrected one, in both runs.
+\item \textbf{Generalization across the real series.} Using the project's own code, we
+repeated the algebraic check over 33 origins spread across real Brent history: the overlap
+held universally under the old formula and never under the corrected one.
 \item \textbf{A pipeline-free, model-free direct test.} The sign of $x_j^{(0)}$ matched the
 sign of the actual future return in 68.3\% of origins under the old convention, against
 50.1\%, consistent with chance, under the fix. That 68.3\% rather than roughly 100\% is itself
@@ -370,14 +368,14 @@ under a true null; one of the ten crossed the nominal 5\% significance threshold
 which is itself unremarkable at that sample size.
 \item \textbf{A fully independent, from-scratch script} with no imports from the project's own
 codebase, using a fresh data download and hand-written embedding and index arithmetic,
-reproduced the same algebraic-overlap result as check~2 above (47 of 47 origins overlapping
-under the old formula, 0 of 47 under the fix). This rules out a shared misreading of the code
-baked into the investigation's own tooling.
+repeated the same algebraic check over 47 origins: again, universal overlap under the old
+formula and none under the fix. Agreement between this standalone script and check~2 rules out
+a shared misreading of the code baked into the investigation's own tooling.
 \item \textbf{A power test with a known, designed-in signal.} We built a synthetic series with
 an explicit mean-reversion rule: after any return exceeding one standard deviation, the next
-three returns are deliberately biased in the opposite
-direction, was correctly detected by the fixed pipeline (accuracy rose from 52.2\% to 58.2\%,
-gap $p=0.011$), confirming that the fix did not simply desensitize the method.
+three returns are deliberately biased in the opposite direction. The fixed pipeline correctly
+detected this designed-in signal (accuracy rose from 52.2\% to 58.2\%, gap $p=0.011$),
+confirming that the fix did not simply desensitize the method.
 \end{enumerate}
 
 We also ran a broader leakage audit covering data-feature temporal ordering, embedding
@@ -474,8 +472,8 @@ unsupervised novelty detector are more forecastable than typical states. The cla
 every standard validation step used in this literature. It did not survive a null-data
 control, because the apparent effect was, in fact, a one-step index error that gave the
 forecasting model partial access to its own target. We confirm this diagnosis at six
-increasing levels of pipeline complexity and show that the corrected pipeline retains full
-power to detect genuine designed-in signal, which rules out the possibility that the
+increasing levels of pipeline complexity and show that the corrected pipeline retains the
+ability to detect genuine designed-in signal, which rules out the possibility that the
 correction simply broke the method. We offer the diagnostic protocol that exposed the error, a
 null-noise control paired with a surrogate-data test, both standard tools in adjacent
 literatures but, to our knowledge, not yet standard practice in delay-embedding-based financial
@@ -506,6 +504,13 @@ relationships that could have appeared to influence the work reported in this pa
 This research received no specific grant from any funding agency in the public, commercial, or
 not-for-profit sectors.
 
+\section*{Declaration of Generative AI Use}
+During the preparation of this work, the authors used an AI coding and writing assistant
+(Claude, Anthropic) for software development support, numerical verification scripts, language
+editing, and structural feedback on draft text. The authors reviewed, verified, and edited all
+content, including independently re-deriving and re-running every quantitative result reported
+in this paper, and take full responsibility for the content of the publication.
+
 \begin{thebibliography}{99}
 
 \bibitem[Alessandrini et al., 2015]{alessandrini2015} Alessandrini, S., Delle Monache, L., Sperati, S., \& Nissen, J. (2015). A novel application of an analog ensemble for short-term wind power forecasting. \emph{Renewable Energy}, 76, 768--781.
@@ -522,7 +527,7 @@ not-for-profit sectors.
 
 \bibitem[Delle Monache et al., 2013]{dellemonache2013} Delle Monache, L., Eckel, F. A., Rife, D. L., Nagarajan, B., \& Searight, K. (2013). Probabilistic weather prediction with an analog ensemble. \emph{Monthly Weather Review}, 141, 3498--3516.
 
-\bibitem[Gelman and Loken, 2013]{gelman2013} Gelman, A., \& Loken, E. (2013). The garden of forking paths: Why multiple comparisons can be a problem, even when there is no ``fishing expedition'' or ``p-hacking'' and the research hypothesis was posited ahead of time. Department of Statistics, Columbia University, working paper.
+\bibitem[Gelman and Loken, 2014]{gelman2013} Gelman, A., \& Loken, E. (2014). The statistical crisis in science. \emph{American Scientist}, 102(6), 460--465.
 
 \bibitem[Good, 2005]{good2005} Good, P. I. (2005). \emph{Permutation, Parametric, and Bootstrap Tests of Hypotheses} (3rd ed.). Springer Series in Statistics. Springer-Verlag.
 
