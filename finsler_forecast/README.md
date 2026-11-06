@@ -1521,6 +1521,49 @@ survey, ACM TKDD 2012; and the long-running surrogate-data-vs-chaos-in-markets l
 investigation's own finding 49 belongs to) — but it is a different paper than the one this
 README spent 50 findings building toward.
 
+**Finding 53 — all 4 detectors compared in finding 33 (diffusion ELBO, Isolation Forest, LOF,
+Mahalanobis-PCA) shared the exact same leaked embedding, and all 4 lose their apparent effect
+once it is fixed: a clean, generalizable methodological result, not a mix of warning and
+surviving positive finding.** An important follow-up question after finding 51: finding 33's
+4-detector comparison table all drew `current_price`/`actual_future_price`/`rets` from the
+SAME `collect_full` function sharing the SAME (buggy, pre-fix) `p = j + (M-1)*TAU` — only the
+atypicality SCORE differed between the 4 columns, not the leakage-affected target/outcome
+measurement. So either all 4 were equally contaminated, or (if one happened to be robust to
+it for some reason) the paper would have both a methodological warning AND a surviving
+positive finding to report. `robustness_journal_grade.py`, now fixed, was re-run in full
+(both the 4-detector comparison and the true holdout test) on all 7 assets to settle this:
+
+**(A) 4 detectors × 7 assets = 28 tests, fixed pipeline:**
+
+| asset | diffusion | Isolation Forest | LOF | Mahalanobis-PCA |
+|---|---|---|---|---|
+| Brent | +2.6pp, p=0.165 | +1.8pp, p=0.252 | +0.2pp, p=0.477 | +0.7pp, p=0.398 |
+| S&P 500 | -1.2pp, p=0.692 | -0.6pp, p=0.605 | -1.6pp, p=0.747 | -1.1pp, p=0.677 |
+| Gold | -5.4pp, p=0.985 | +0.9pp, p=0.346 | -0.5pp, p=0.583 | -1.0pp, p=0.640 |
+| Bitcoin | -1.7pp, p=0.720 | +0.6pp, p=0.422 | -2.9pp, p=0.823 | -1.4pp, p=0.689 |
+| Ethereum | +1.2pp, p=0.352 | +3.6pp, p=0.135 | +1.1pp, p=0.372 | **+6.2pp, p=0.025** |
+| Silver | +1.4pp, p=0.302 | -2.0pp, p=0.802 | -1.8pp, p=0.774 | -1.8pp, p=0.762 |
+| WTI Crude | -1.0pp, p=0.654 | -0.3pp, p=0.551 | -0.2pp, p=0.518 | -0.1pp, p=0.516 |
+
+**Only 1 of 28 tests reaches p<0.05** (Ethereum/Mahalanobis-PCA) — exactly consistent with the
+~1.4 false positives pure chance predicts at α=0.05 across 28 independent tests, i.e.
+indistinguishable from noise, not a surviving signal.
+
+**(B) True held-out test, fixed pipeline, all 4-detector-fused flag, 7 assets:** every asset
+individually non-significant (p ranging 0.09 to 0.89), and critically, **Fisher's combined
+p-value across all 7 held-out assets is now 0.288** — compare to the original (leaked)
+pipeline's p=0.000038 on the identical held-out protocol. The panel-level result that
+previously looked like the strongest piece of evidence in the entire investigation is, with
+the leak fixed, indistinguishable from chance.
+
+**This resolves the question cleanly in favor of the more generalizable narrative**: all 4
+detectors' apparent predictive power came from the shared leaked embedding, not from anything
+specific to any one detector's architecture. The paper's defensible claim is not "warning,
+except for one surviving positive result" — it is a clean, single-mechanism methodological
+finding: an entire family of 4 structurally-different anomaly/novelty detectors, applied to
+the same embedding-index bug, uniformly showed spurious predictability that uniformly
+disappeared once the shared bug was fixed.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
