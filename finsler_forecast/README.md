@@ -818,6 +818,15 @@ replicates out-of-sample), but it is also not uniformly strong enough to claim i
 every asset on fresh data — Gold, Bitcoin, and Ethereum in particular should be described as
 suggestive, not confirmed, going forward.
 
+**Multiple-testing correction across the 7 simultaneous per-asset tests** (applied directly to
+the held-out p-values above, in addition to the Fisher combination): under a Bonferroni
+correction (α=0.05/7=0.0071), **Brent and Silver survive; WTI Crude (p=0.008) narrowly does
+not**. Under the less conservative Benjamini-Hochberg procedure, all three (Brent, Silver, WTI
+Crude) survive — the same three as without any correction. Reported honestly rather than only
+citing the uncorrected per-asset numbers: the strict Bonferroni view is that 2 of 7 assets,
+not 3, hold up to the most conservative standard multiple-testing adjustment, alongside the
+panel-level Fisher result.
+
 ## A bridge between two literatures
 
 The colleague's core method (delay-embed returns, find the K nearest historical states,
@@ -1228,11 +1237,14 @@ permutation test can resolve per asset (reported per-asset p-values are bounded 
 p<0.0005 each); the resulting combined statistic is far beyond any conventional significance
 threshold — report this as **p ≪ 0.0001** rather than the literal near-zero value the
 calculation produces, consistent with finding 45's precision-of-language note about permutation
-test floors. This is now the single best-replicated result in the entire investigation and
-should be presented in any write-up as a confirmed finding, not an exploratory one — unlike
-the fusion, systemic-risk-index, Granger-network, and classical-baseline findings (35, 36,
-38-40, 43-44), which remain exploratory/suggestive pending their own held-out confirmation if
-that becomes a priority.
+test floors. **Unlike finding 33-B, this result survives even the strict Bonferroni correction
+for 7 simultaneous tests** (α/7=0.0071): every asset's held-out p-value (≤0.001) clears that
+bar, not just the 2-3 that survive it for the binary-accuracy claim. This is now the single
+best-replicated and most multiple-testing-robust result in the entire investigation and should
+be presented in any write-up as a confirmed finding, not an exploratory one — unlike the
+fusion, systemic-risk-index, Granger-network, and classical-baseline findings (35, 36, 38-40,
+43-44), which remain exploratory/suggestive pending their own held-out confirmation if that
+becomes a priority.
 
 **Finding 47 — the local-Lyapunov mechanism is robust to the specific Theiler window and
 divergence horizon chosen, not an artifact of one parameter choice.** The single most likely
