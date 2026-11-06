@@ -90,10 +90,13 @@ def collect_full(ticker, name, max_years, retrain_every=20, epochs=50):
         if len(idx_diff) < 3:
             continue
         diff_atyp, _ = full_elbo_score(net, schedule, pc[j], seed=k), None
-        p = j + (M - 1) * TAU
+        # FIX (finding 51/52 leakage audit): p must be j + M*TAU, not (M-1)*TAU -- otherwise
+        # pc[j][0] (the embedding's most-recent return) is literally equal to log_ret[p], the
+        # FIRST step of the very future window being predicted (direct target leakage).
+        p = j + M * TAU
         current_price, actual_future_price = prices[p], prices[p + HORIZON]
-        rets = [np.log(prices[idx + (M-1)*TAU + HORIZON] / prices[idx + (M-1)*TAU])
-                for idx in idx_diff if idx + (M-1)*TAU + HORIZON < len(prices)]
+        rets = [np.log(prices[idx + M*TAU + HORIZON] / prices[idx + M*TAU])
+                for idx in idx_diff if idx + M*TAU + HORIZON < len(prices)]
         if len(rets) < 3:
             continue
         pred_up = np.mean(rets) > 0
@@ -149,7 +152,7 @@ def run_holdout_test():
         df = collect_full(ticker, name, max_years)
         if df.empty:
             continue
-        holdout = df[df["origin_idx"] >= cutoff - (M - 1) * TAU]
+        holdout = df[df["origin_idx"] >= cutoff - M * TAU]
         if len(holdout) < 15:
             print(f"{name}: too few held-out folds ({len(holdout)}), skipping")
             continue

@@ -60,10 +60,12 @@ def collect_for_stats(ticker, name, max_years=20, retrain_every=20, epochs=50):
         if len(idx_diff) < 3:
             continue
         atyp, _ = full_elbo_score(net, schedule, pc[j], seed=k), None
-        p = j + (M - 1) * TAU
+        # FIX (finding 51/52 leakage audit): see robustness_journal_grade.py for the full
+        # explanation -- p must be j + M*TAU, not (M-1)*TAU.
+        p = j + M * TAU
         current_price, actual_future_price = prices[p], prices[p + HORIZON]
-        rets = [np.log(prices[idx + (M-1)*TAU + HORIZON] / prices[idx + (M-1)*TAU])
-                for idx in idx_diff if idx + (M-1)*TAU + HORIZON < len(prices)]
+        rets = [np.log(prices[idx + M*TAU + HORIZON] / prices[idx + M*TAU])
+                for idx in idx_diff if idx + M*TAU + HORIZON < len(prices)]
         if len(rets) < 3:
             continue
         pred_up = np.mean(rets) > 0

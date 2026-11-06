@@ -1422,6 +1422,105 @@ at by actually running the test a critical reviewer would run, rather than by as
 theoretically-motivated story was automatically correct. That is itself a point in the paper's
 favor if reported this way, not a reason to drop the Lyapunov material entirely.
 
+**🚨 Finding 51 — a project-wide, since-the-beginning index-leakage bug in the core embedding
+convention: the entire "atypical days are more predictable" claim (findings 18-50) does not
+survive correction, and the bug fully explains why it appeared to.** Prompted directly by
+finding 49-50's surrogate-data result on a pure-noise control test, the exact same
+`collect_real_pipeline` procedure was run on 200 pure-market-data-matched surrogates AND on
+literal pure IID Gaussian white noise with no structure whatsoever. The pure-noise control
+showed a "significant" atypicality-conditioned accuracy gap of +5.2 to +7.3pp with p as low as
+0.0000 — on data that is, by construction, completely unpredictable. This forced a root-cause
+investigation of the embedding itself.
+
+**The bug, found and proven exactly:** `economic_backtest.py`'s `p = j + (M - 1) * TAU`
+convention for locating "today's price" relative to the embedded state `pc[j]` is off by one
+step. Concretely, `pc[j][0]` (the embedding's "most recent return" component, used for both
+the atypicality score and k-NN analog selection) is numerically IDENTICAL to `log_ret[p]` —
+the FIRST of the `HORIZON` returns summed to produce the "actual future return" every finding
+in this investigation tried to predict. The embedding's "most recent known return" was, in
+fact, one step into the future it was supposedly predicting.
+
+**Verified six independent ways before being trusted, given the scale of what it implies:**
+
+1. **Exact algebraic identity**, hand-derived and confirmed numerically on a tiny synthetic
+   price array: `pc[j][0] == log_ret[p]` exactly (not approximately).
+2. **Generalization check**: the same overlap holds in 33/33 origin points spread across real
+   Brent history under the old formula, and 0/33 under the corrected formula
+   (`p = j + M * TAU`).
+3. **Pipeline-free direct correlation test** (bypasses the diffusion net, analog selection, and
+   permutation test entirely): `sign(pc[j][0])` matches `sign(actual future return)` in **68.3%**
+   of folds under the old formula vs. **50.1%** (chance) under the fix. (68.3%, not ~100%, is
+   exactly what theory predicts: `pc[j][0]` is only 1 of the 3 summed terms making up the
+   3-step future return, so it is strongly but not perfectly correlated with that sum's sign —
+   this is confirmatory, not a reason for doubt.)
+4. **Pure-IID-noise null control, repeated 10 times across two different assets' length/scale**
+   (Brent and S&P 500, 2 different random seeds): under the OLD (buggy) pipeline, pure noise
+   produced p-values as low as 0.0000 with 5-7pp gaps every time; under the FIXED pipeline, the
+   mean p-value across 7 fresh trials was 0.496 (textbook-correct behavior for a true null —
+   the theoretical expectation is exactly 0.5), with only 1/7 crossing p<0.05 (consistent with
+   the expected ~5% false-positive rate, not systematic).
+5. **A fully independent, from-scratch verification script with zero imports from this
+   project's codebase** (fresh `yfinance` download, hand-written embedding and index
+   arithmetic) reproduced the identical 47/47-vs-0/47 result, ruling out a shared
+   misunderstanding baked into this investigation's own code.
+6. **A power test with a known, designed-in signal** (finding 52, below) confirms the fixed
+   pipeline did not simply lose sensitivity — it still detects genuine conditional
+   predictability when it is actually present.
+
+**The headline consequence:** re-running `statistical_rigor.py` (finding 31's exact procedure)
+with the one-line fix (`p = j + M * TAU` instead of `j + (M-1) * TAU`, applied everywhere this
+pattern appears) on all 5 originally-tested assets:
+
+| asset | accuracy gap (fixed pipeline) | p-value |
+|---|---|---|
+| Brent | +2.4pp | p=0.176 |
+| S&P 500 | -1.2pp | p=0.692 |
+| Gold | -5.4pp | p=0.985 |
+| Bitcoin | -1.7pp | p=0.720 |
+| Ethereum | +1.2pp | p=0.352 |
+
+**None significant. Several even negative.** This affects every script in the project that
+uses this exact `p = j + (M-1) * TAU` pattern (24 files, essentially the entire codebase from
+finding 18 onward) — findings 18-50 should all be treated as unverified pending a full re-run
+with the fix, and based on this result on the core claim itself, most are unlikely to survive.
+This is, candidly, the most important finding of the whole investigation — not the one anyone
+set out to find, but the one that matters most before anything here is submitted anywhere.
+
+**Finding 52 — a power test confirms the fixed pipeline did not simply lose sensitivity: it
+still detects genuine designed-in predictability when present, at a realistic effect size.**
+The one remaining concern after finding 51: did the leakage fix also somehow desensitize the
+pipeline, making the "nothing survives" result on real data uninformative (a type-2 error)
+rather than a genuine null? `power_test_known_signal.py` generates a synthetic return series
+with a KNOWN, designed-in nonlinear structure — after any return exceeding 1 standard
+deviation in magnitude, the next 3 returns are deliberately biased in the opposite direction
+(a literal, by-construction "mean-reversion-after-a-shock" rule, exactly the kind of structure
+this investigation originally hypothesized might exist in real markets) — and runs the fixed
+pipeline on it.
+
+| condition | overall accuracy | atypicality-conditioned gap | p-value |
+|---|---|---|---|
+| control (no designed signal) | 52.2% | -3.67pp | p=0.933 |
+| designed signal present | **58.2%** | **+5.88pp** | **p=0.011** |
+
+**The fixed pipeline clearly detects the designed signal** (accuracy rises from 52.2% to 58.2%,
+gap becomes large and significant) while correctly reporting no effect when none is present.
+This closes the loop: the absence of any significant gap on real market data (finding 51) is a
+genuine null result from a pipeline with retained statistical power, not an artifact of a
+broken or desensitized test.
+
+**What this means going forward:** the investigation's actual, defensible contribution is no
+longer "atypical market states are more predictable" — it is the diagnosis itself: a detailed,
+six-ways-verified case study of how a one-step embedding-index error can survive walk-forward
+cross-validation, permutation testing, and even a genuine single-shot out-of-sample holdout
+test (finding 33-B) undetected for months, because the leakage is baked into every fold's
+feature construction identically in both the training and the "held-out" data. This is a
+legitimate, citable contribution in its own right (see the precedent literature on spurious
+predictability and data leakage in financial ML — Nikolopoulos 2024/2025, "Spurious
+Predictability in Financial Machine Learning"; the foundational "Leakage in data mining"
+survey, ACM TKDD 2012; and the long-running surrogate-data-vs-chaos-in-markets literature this
+investigation's own finding 49 belongs to) — but it is a different paper than the one this
+README spent 50 findings building toward.
+
 ## Final summary across all 27 methods tested
 
 | # | method | mechanism | result |
