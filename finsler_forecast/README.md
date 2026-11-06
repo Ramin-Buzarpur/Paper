@@ -1282,6 +1282,19 @@ e.g. Brent's early half is 2008-2017, its late half 2017-2026) and re-runs both 
 binary-accuracy permutation test and the local-Lyapunov permutation test independently within
 each half.
 
+**A precision note on what this test does and doesn't establish, worth stating explicitly
+before the table:** the split point (the calendar median of each asset's own fold indices) was
+fixed mechanically before looking at any result, and the identical test procedure was applied
+unchanged to both halves — so this is not a forking-paths exercise in how the split or test was
+chosen. However, the atypical/typical threshold used within each half is that half's OWN median
+(the same exploratory convention finding 41 used on the full sample), not a threshold learned
+from a separate training period and frozen before touching held-out data (the stricter
+convention finding 46 used). This does not leak the forecast target or the LLE measurement
+itself — both are already strictly causal fold-by-fold, independent of how the folds are later
+bucketed for this diagnostic — but it does mean finding 48 should be read as a **temporal
+stability check of finding 41's established pattern**, not as a second independent
+holdout-grade confirmation with finding 46's full rigor.
+
 | asset | period split | accuracy gap, early / late | LLE difference, early / late |
 |---|---|---|---|
 | Brent | 2008-2017 / 2017-2026 | +6.6pp (p=0.038) / **+12.7pp (p<0.0001)** | -0.159 (p<0.001) / -0.177 (p<0.001) |
@@ -1303,7 +1316,9 @@ between halves (Gold significant only early, Ethereum significant only late) —
 consistent with finding 34's observation that this specific signal behaves differently across
 assets and regimes, not a sign that the underlying phenomenon is spurious. Brent, Silver, and
 WTI Crude remain significant in both halves, as they did in the original held-out test
-(finding 33-B).
+(finding 33-B). Given the precision note above, this finding should be cited in any write-up
+as evidence that finding 41's pattern is temporally stable, complementing — not substituting
+for — finding 46's stricter, frozen-threshold holdout confirmation of the same mechanism.
 
 ## Final summary across all 27 methods tested
 
